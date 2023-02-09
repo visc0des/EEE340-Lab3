@@ -35,9 +35,19 @@ class FunctionType:
 
 @dataclass
 class Symbol:
+
+    # Entity's declared name
     name: str
+
+    # Entity's declared type
     type: Union[PrimitiveType, FunctionType]
+
+    # True if symbol entity is a parameter.
     is_param: bool = False
+
+    # Represents order entity was declared in.
+    # Parameters counted separately from variables in same scope.
+    # Always 0 for function symbols.
     index: int = 0
 
     def __repr__(self):
