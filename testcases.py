@@ -10,8 +10,7 @@ statements and higher-level constructs as appropriate.**
 
 TODO: Complete test cases for Nimble semantic analysis, less function definitions and calls
 
-Group members: TODO: Your names here
-
+Group members: OCdt Liethan Velasco and OCdt Aaron Brown
 Version: TODO: Submission date here
 
 Instructor's version: 2023-02-08

@@ -1,5 +1,5 @@
 """
-Group members: TODO: your names
+Group members: OCdt Liethan Velasco and OCdt Aaron Brown
 
 Version: TODO: completion date
 
