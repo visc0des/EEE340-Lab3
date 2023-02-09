@@ -26,6 +26,8 @@ class PrimitiveType(Enum):
 
 @dataclass
 class FunctionType:
+
+    # Self explanatory
     parameter_types: Sequence[PrimitiveType]
     return_type: PrimitiveType
 
@@ -86,21 +88,45 @@ class Scope:
 
     """
 
+    # Set name = '$global', return_type = None; enclosing_scope = None;
     def __init__(self, name, return_type=None, enclosing_scope=None):
         self.__variable_index = 0
         self.__parameter_index = 0
         self.name = name
-        self.return_type = return_type
-        self.enclosing_scope = enclosing_scope
         self.__child_scopes = {}
         self.__symbols = {}
 
+        # Below for semantic analysis
+        self.return_type = return_type
+        self.enclosing_scope = enclosing_scope
+
+
     def create_child_scope(self, name, return_type):
+        """
+        Description: Creates child scope.
+
+        <name : str> : The name to give the child scope.
+        <return_type> : The return type of the data type to return from the child scope.
+
+        Returns: the created child scope object
+        """
+
         new_scope = Scope(name, return_type, enclosing_scope=self)
         self.__child_scopes[name] = new_scope
         return new_scope
 
+
+    # ---------------- Functions below for semantic analysis ----------------
+
     def define(self, name, _type, is_param=False):
+        """
+        Description: Creates instance of Symbol mapped to <name> and puts in __symbols dictionary.
+
+        <_type> : Can be primitiveType or functionType
+        <is_param> : Is true if generated symbol is to be a parameter.
+        """
+
+
         if is_param:
             self.__symbols[name] = Symbol(name, _type, is_param=True, index=self.__parameter_index)
             self.__parameter_index += 1
@@ -110,7 +136,19 @@ class Scope:
         else:
             self.__symbols[name] = Symbol(name, _type)
 
+
     def resolve(self, name):
+        """
+        Description: If name defined in local scope, returns corresponding Symbol.
+                     If name not defined, and enclosing scope of current one exists, resolves the
+                     name in enclosing scope and returns result.
+
+        <name : str> : The name to find the corresponding Symbol of.
+
+        Returns:
+            The resolved symbol.
+        """
+
         local_symbol = self.resolve_locally(name)
         if local_symbol:
             return local_symbol
@@ -119,13 +157,32 @@ class Scope:
         else:
             return None
 
+
     def resolve_locally(self, name):
+        """
+        Description: Resolves the passed in name solely in local scope.
+
+        <name : str> : The name to find the corresponding Symbol of.
+
+        Returns:
+            The resolved symbol. Returns None if symbol not found.
+        """
         return self.__symbols.get(name)
 
+
     def child_scope_named(self, name):
+        """
+        Description: Returns child scope with the passed in <name>.
+
+        <name : str>  The name of child scope to return.
+
+        Returns:
+            The found child scope.
+        """
         return self.__child_scopes.get(name)
 
     # ---------------------------------------------------------------------------------
+
     # Inspection of child scopes is primarily for testing
 
     @property
@@ -133,6 +190,7 @@ class Scope:
         return self.__child_scopes
 
     # ---------------------------------------------------------------------------------
+
     # The following three methods are used in code generation. Not relevant for semantic
     # analysis.
 
@@ -145,6 +203,8 @@ class Scope:
 
     def functions(self):
         return [s for s in self.__symbols.values() if isinstance(s.type, FunctionType)]
+
+    # ---------------------------------------------------------------------------------
 
     def __repr__(self):
         entries = '\n'.join(f'  {n} : {str(t)}'
