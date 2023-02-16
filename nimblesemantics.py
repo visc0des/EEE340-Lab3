@@ -158,7 +158,7 @@ class InferTypesAndCheckConstraints(NimbleListener):
         pass
 
     def exitStringLiteral(self, ctx: NimbleParser.StringLiteralContext):
-        pass
+        self.type_of[ctx] = PrimitiveType.String
 
     def exitBoolLiteral(self, ctx: NimbleParser.BoolLiteralContext):
-        pass
+        self.type_of[ctx] = PrimitiveType.Bool
