@@ -29,6 +29,10 @@ VALID_EXPRESSIONS = [
     # '59+a' is fine, '59 + a' won't work.
     ('37', PrimitiveType.Int),
     ('-37', PrimitiveType.Int)
+
+    # Brown tests
+
+    # Velasco tests
 ]
 
 INVALID_EXPRESSIONS = [
@@ -36,6 +40,10 @@ INVALID_EXPRESSIONS = [
     # As for VALID_EXPRESSIONS, there should be NO WHITE SPACE in the expressions.
     ('!37', Category.INVALID_NEGATION),
     ('!!37', Category.INVALID_NEGATION),
+
+    # Brown tests
+
+    # Velasco tests
 ]
 
 
