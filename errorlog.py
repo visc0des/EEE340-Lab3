@@ -60,8 +60,13 @@ class ErrorLog:
         self.__entries = defaultdict(dict)
 
     def add(self, ctx: ParserRuleContext, category: Category, message: str):
+        """
+        Creates a new log Entry using the provided information and inserts it into the log.
+        The message should be a well formatted string that clearly describes the error.
+        """
         entry = Entry(ctx, category, message)
         self.__entries[entry.line()][ctx.getText()] = entry
+
 
     def includes_exactly(self, category: Category, line: int, source: str) -> bool:
         """
@@ -70,6 +75,7 @@ class ErrorLog:
         be multiple errors on a line and a specific error is of interest.
         """
         return self.__entries[line][source].category == category
+
 
     def includes_on_line(self, category: Category, line: int):
         """

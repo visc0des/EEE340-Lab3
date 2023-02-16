@@ -53,6 +53,8 @@ def do_semantic_analysis(source, start_rule_name, first_phase_only=False):
 
 
 def index(node_types):
+    """ Creates the 2-level dictionary of the inferred types of each expression
+    in the script. Look in API documentation for example. """
     indexed_types = defaultdict(dict)
     for ctx, inferred_type in node_types.items():
         line = ctx.start.line
