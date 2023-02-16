@@ -31,6 +31,22 @@ VALID_EXPRESSIONS = [
     ('-37', PrimitiveType.Int),
 
     # Brown tests
+    # Tests for strings
+    ('"hello"', PrimitiveType.String),
+    (r'"Hello\nWorld"', PrimitiveType.String),
+    (r'"Hello\rWorld"', PrimitiveType.String),
+    (r'"Hello\aWorld"', PrimitiveType.String),
+    (r'"Hello\bWorld"', PrimitiveType.String),
+    (r'"Hello\fWorld"', PrimitiveType.String),
+    (r'"Hello\tWorld"', PrimitiveType.String),
+    (r'"Hello\vWorld"', PrimitiveType.String),
+    (r'"Hello\\World"', PrimitiveType.String),
+    (r'"Hello\'World"', PrimitiveType.String),
+    (r'"Hello\?World"', PrimitiveType.String),
+    (r'"Hello            World"', PrimitiveType.String),
+    (r'"HELLO WORLD"', PrimitiveType.String),
+
+    # Tests for MulDiv
     ('12*62', PrimitiveType.Int),
     ('1*33', PrimitiveType.Int),
     ('17*4', PrimitiveType.Int),
@@ -45,6 +61,7 @@ INVALID_EXPRESSIONS = [
     ('!!37', Category.INVALID_NEGATION),
 
     # Brown tests
+    # Tests for MulDiv
     ('!!82*12', Category.INVALID_BINARY_OP),
 
     # Velasco tests
