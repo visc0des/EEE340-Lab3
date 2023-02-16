@@ -139,7 +139,9 @@ class InferTypesAndCheckConstraints(NimbleListener):
         pass
 
     def exitMulDiv(self, ctx: NimbleParser.MulDivContext):
-        if self.type_of[ctx.expr(1)] == PrimitiveType.Int and self.type_of[ctx.expr(0)] == PrimitiveType.Int:
+        left = self.type_of[ctx.expr(0)]
+        right = self.type_of[ctx.expr(1)]
+        if left == PrimitiveType.Int and right == PrimitiveType.Int:
             self.type_of[ctx] = PrimitiveType.Int
         else:
             self.type_of[ctx] = PrimitiveType.ERROR

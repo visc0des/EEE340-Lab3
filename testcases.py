@@ -28,9 +28,12 @@ VALID_EXPRESSIONS = [
     # expressions must contain NO WHITE SPACE for the tests to work. E.g.,
     # '59+a' is fine, '59 + a' won't work.
     ('37', PrimitiveType.Int),
-    ('-37', PrimitiveType.Int)
+    ('-37', PrimitiveType.Int),
 
     # Brown tests
+    ('12*62', PrimitiveType.Int),
+    ('1*33', PrimitiveType.Int),
+    ('17*4', PrimitiveType.Int),
 
     # Velasco tests
 ]
@@ -42,6 +45,7 @@ INVALID_EXPRESSIONS = [
     ('!!37', Category.INVALID_NEGATION),
 
     # Brown tests
+    ('!!82*12', Category.INVALID_BINARY_OP),
 
     # Velasco tests
 ]
