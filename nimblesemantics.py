@@ -139,10 +139,7 @@ class InferTypesAndCheckConstraints(NimbleListener):
                                f"Can't apply {ctx.op.text} to {self.type_of[ctx].name}")
 
     def exitParens(self, ctx: NimbleParser.ParensContext):
-
-
-
-        pass;
+        self.type_of[ctx] = self.type_of[ctx.expr()]
 
 
     def exitMulDiv(self, ctx: NimbleParser.MulDivContext):
