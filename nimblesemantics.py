@@ -139,7 +139,12 @@ class InferTypesAndCheckConstraints(NimbleListener):
         pass
 
     def exitMulDiv(self, ctx: NimbleParser.MulDivContext):
-        pass
+        if self.type_of[ctx.expr(1)] == PrimitiveType.Int and self.type_of[ctx.expr(0)] == PrimitiveType.Int:
+            self.type_of[ctx] = PrimitiveType.Int
+        else:
+            self.type_of[ctx] = PrimitiveType.ERROR
+            self.error_log.add(ctx, Category.INVALID_BINARY_OP,
+                               f"Can't multiply or divide {self.type_of[ctx.expr(0)]} with {self.type_of[ctx.expr(1)]}")
 
     def exitAddSub(self, ctx: NimbleParser.AddSubContext):
         pass
