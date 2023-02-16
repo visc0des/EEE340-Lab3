@@ -35,7 +35,12 @@ VALID_EXPRESSIONS = [
     ('1*33', PrimitiveType.Int),
     ('17*4', PrimitiveType.Int),
 
-    # Velasco tests
+    # ------------------ Velasco tests ------------------
+
+    # AddSub
+    ('23+49', PrimitiveType.Int),
+    ('16-0', PrimitiveType.Int),
+
 ]
 
 INVALID_EXPRESSIONS = [
@@ -47,8 +52,14 @@ INVALID_EXPRESSIONS = [
     # Brown tests
     ('!!82*12', Category.INVALID_BINARY_OP),
 
-    # Velasco tests
+    # ------------------ Velasco tests ------------------
+
+    # AddSub
+    ('someString+nope', Category.INVALID_BINARY_OP),
+    #('true+99', Category.INVALID_BINARY_OP)
+
 ]
+
 
 
 def print_debug_info(source, indexed_types, error_log):
@@ -95,6 +106,10 @@ class TypeTests(unittest.TestCase):
                               expected_category=expected_category):
                 self.assertEqual(PrimitiveType.ERROR, indexed_types[1][expression])
                 self.assertTrue(error_log.includes_exactly(expected_category, 1, expression))
+
+
+
+
 
     # def test_simple_var_dec(self):
     #     """

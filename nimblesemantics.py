@@ -127,16 +127,23 @@ class InferTypesAndCheckConstraints(NimbleListener):
         self.type_of[ctx] = PrimitiveType.Int
 
     def exitNeg(self, ctx: NimbleParser.NegContext):
+
         """ TODO: Extend to handle boolean negation. """
+
         if ctx.op.text == '-' and self.type_of[ctx.expr()] == PrimitiveType.Int:
             self.type_of[ctx] = PrimitiveType.Int
+
         else:
             self.type_of[ctx] = PrimitiveType.ERROR
             self.error_log.add(ctx, Category.INVALID_NEGATION,
                                f"Can't apply {ctx.op.text} to {self.type_of[ctx].name}")
 
     def exitParens(self, ctx: NimbleParser.ParensContext):
-        pass
+
+
+
+        pass;
+
 
     def exitMulDiv(self, ctx: NimbleParser.MulDivContext):
         left = self.type_of[ctx.expr(0)]
@@ -149,7 +156,19 @@ class InferTypesAndCheckConstraints(NimbleListener):
                                f"Can't multiply or divide {self.type_of[ctx.expr(0)]} with {self.type_of[ctx.expr(1)]}")
 
     def exitAddSub(self, ctx: NimbleParser.AddSubContext):
-        pass
+
+        # If children types correct, set type of this token to Int
+        if ((ctx.op.text == '+' or ctx.op.text == '-') and
+            self.type_of[ctx.expr(0)] == PrimitiveType.Int and
+                self.type_of[ctx.expr(1)] == PrimitiveType.Int):
+            self.type_of[ctx] = PrimitiveType.Int;
+
+        # Otherwise, set as error.
+        else:
+            self.type_of[ctx] = PrimitiveType.ERROR;
+            self.error_log.add(ctx, Category.INVALID_BINARY_OP,
+                               f"Can't apply {ctx.op.text} between non-integer type expression(s).");
+
 
     def exitCompare(self, ctx: NimbleParser.CompareContext):
         pass
