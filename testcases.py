@@ -13,6 +13,13 @@ TODO: Complete test cases for Nimble semantic analysis, less function definition
 Group members: OCdt Liethan Velasco and OCdt Aaron Brown
 Version: TODO: Submission date here
 
+
+Notes:
+    - Currently waiting on reply from Greg about the varDec issue.
+        Recap: Turns out we need to set rule_start_name to varDec in order to for this to be tested.
+               Secondly, if I don't put spaces in the test case for a varDec, ANTLR does it even
+               register this as a varDec, and does not run exitVarDec().
+
 Instructor's version: 2023-02-08
 """
 
@@ -27,11 +34,13 @@ VALID_EXPRESSIONS = [
     # Due to the way the inferred_types are stored, using ctx.getText() as the key,
     # expressions must contain NO WHITE SPACE for the tests to work. E.g.,
     # '59+a' is fine, '59 + a' won't work.
+
+
     ('37', PrimitiveType.Int),
     ('-37', PrimitiveType.Int),
 
     # Brown tests
-    ('12*62', PrimitiveType.Int),
+    ('12 * 62', PrimitiveType.Int),
     ('1*33', PrimitiveType.Int),
     ('17*4', PrimitiveType.Int),
 
@@ -41,11 +50,27 @@ VALID_EXPRESSIONS = [
     ('23+49', PrimitiveType.Int),
     ('16-0', PrimitiveType.Int),
 
+    # Variable
+
+
+
+    # Variable Declarations - todo: start_rule_name needs to be 'varDec' for this. Also, does not work without spaces.
+    ('varmyBool:Bool', PrimitiveType.Bool),
+    ('varmyInt:Int', PrimitiveType.Int),
+    ('varmyString:String', PrimitiveType.String),
+    #('varmyBool:Bool=true', PrimitiveType.Bool),
+    #('varmyInt:Int=100', PrimitiveType.Int),
+    #('varmyString:String="SomeString"', PrimitiveType.String),
+
+
 ]
 
 INVALID_EXPRESSIONS = [
     # Each entry is a pair: (expression source, expected error category)
     # As for VALID_EXPRESSIONS, there should be NO WHITE SPACE in the expressions.
+
+
+
     ('!37', Category.INVALID_NEGATION),
     ('!!37', Category.INVALID_NEGATION),
 
@@ -55,8 +80,12 @@ INVALID_EXPRESSIONS = [
     # ------------------ Velasco tests ------------------
 
     # AddSub
-    ('someString+nope', Category.INVALID_BINARY_OP),
-    #('true+99', Category.INVALID_BINARY_OP)
+    ('"someString"+"nope"', Category.INVALID_BINARY_OP),
+    ('true+99', Category.INVALID_BINARY_OP)
+
+    # Variables
+    
+
 
 ]
 
@@ -84,13 +113,23 @@ class TypeTests(unittest.TestCase):
         in the error_log.
         """
         for expression, expected_type in VALID_EXPRESSIONS:
+
+            if expression == 'varmyBool:Bool':
+                print("What's up");
+
             error_log, global_scope, indexed_types = do_semantic_analysis(expression, 'expr')
+
+            """
             # this is an example of how to use the print_debug_info function to understand errors
-            # if expression == '-37':
-            #     print_debug_info(expression, indexed_types, error_log)
+            if expression == 'varmyBool:Bool':
+                print_debug_info(expression, indexed_types, error_log)
+            """
+
             with self.subTest(expression=expression, expected_type=expected_type):
                 self.assertEqual(expected_type, indexed_types[1][expression])
                 self.assertEqual(0, error_log.total_entries())
+
+
 
     def test_invalid_expressions(self):
         """

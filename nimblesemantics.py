@@ -101,7 +101,41 @@ class InferTypesAndCheckConstraints(NimbleListener):
     # --------------------------------------------------------
 
     def exitVarDec(self, ctx: NimbleParser.VarDecContext):
-        pass
+
+        # Extracting variable type declared, and defaulting resultant type to void
+        var_type = ctx.TYPE().getText();
+        result_type = PrimitiveType.Void;
+
+        # Check if we have an assignment too. Set type of variable declared accordingly
+        if ctx.expr() is not None:
+
+            # Extracting value of expression
+            expr_type = self.type_of[ctx.expr()];
+
+            # Setting variable type
+            if expr_type == PrimitiveType.Int and var_type == 'Int':
+                result_type = PrimitiveType.Int;
+            elif expr_type == PrimitiveType.Bool and var_type == 'Bool':
+                result_type = PrimitiveType.Bool;
+            elif expr_type == PrimitiveType.String and var_type == 'String':
+                result_type = PrimitiveType.String;
+            else:
+                result_type = PrimitiveType.ERROR;
+
+        # If no assignment given, set var type based on declaration.
+        else:
+
+            if var_type == 'Int':
+                result_type = PrimitiveType.Int;
+            elif var_type == 'Bool':
+                result_type = PrimitiveType.Bool;
+            elif var_type == 'String':
+                result_type = PrimitiveType.String;
+
+        # Setting var type
+        self.current_scope.define(ctx.ID().getText(), result_type, False);
+        self.type_of[ctx] = self.current_scope.resolve(ctx.ID().getText());
+
 
     # --------------------------------------------------------
     # Statements
@@ -174,7 +208,17 @@ class InferTypesAndCheckConstraints(NimbleListener):
         pass
 
     def exitVariable(self, ctx: NimbleParser.VariableContext):
-        pass
+
+        # var x : Int = ...
+        # print x.                  <-- Testing needs these two together.
+
+        # ^ x would be type Int
+        # If a type for x exists in the dictionary, then this variable is set to that type.
+        # This means varDec needs to be completed first.
+        # !!! CONSIDER USING RESOLVE
+
+        pass;
+
 
     def exitStringLiteral(self, ctx: NimbleParser.StringLiteralContext):
         self.type_of[ctx] = PrimitiveType.String
