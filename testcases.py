@@ -46,6 +46,10 @@ VALID_EXPRESSIONS = [
     (r'"Hello            World"', PrimitiveType.String),
     (r'"HELLO WORLD"', PrimitiveType.String),
 
+    # Tests for Bools
+    ('true', PrimitiveType.Bool),
+    ('false', PrimitiveType.Bool),
+
     # Tests for MulDiv
     ('12*62', PrimitiveType.Int),
     ('1*33', PrimitiveType.Int),
