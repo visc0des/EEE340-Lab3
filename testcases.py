@@ -65,6 +65,8 @@ INVALID_EXPRESSIONS = [
     ('!!37', Category.INVALID_NEGATION),
 
     # Brown tests
+    # Can't make invalid tests for literals as it won't go into the method
+
     # Tests for MulDiv
     ('!!82*12', Category.INVALID_BINARY_OP),
 
