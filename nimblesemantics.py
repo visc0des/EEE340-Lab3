@@ -102,38 +102,35 @@ class InferTypesAndCheckConstraints(NimbleListener):
 
     def exitVarDec(self, ctx: NimbleParser.VarDecContext):
 
-        # Extracting variable type declared, and defaulting resultant type to void
-        var_type = ctx.TYPE().getText();
-        result_type = PrimitiveType.Void;
+        # TODO - handle duplicated names
 
-        # Check if we have an assignment too. Set type of variable declared accordingly
+        # Creating mini-lookup dictionary for verification
+        type_dict = {'Int': PrimitiveType.Int, 'Bool': PrimitiveType.Bool, 'String': PrimitiveType.String}
+
+        # Extracting variable type declared, its primitive type,
+        # and the ID declared
+        var_text = ctx.TYPE().getText();
+        var_primtype = type_dict[var_text];
+        this_ID = ctx.ID().getText();
+
+        # Second, if there was an assignment, check if does not violate type constraint
         if ctx.expr() is not None:
 
-            # Extracting value of expression
+            # Extract value of expression put for assignment
             expr_type = self.type_of[ctx.expr()];
 
-            # Setting variable type
-            if expr_type == PrimitiveType.Int and var_type == 'Int':
-                result_type = PrimitiveType.Int;
-            elif expr_type == PrimitiveType.Bool and var_type == 'Bool':
-                result_type = PrimitiveType.Bool;
-            elif expr_type == PrimitiveType.String and var_type == 'String':
-                result_type = PrimitiveType.String;
-            else:
-                result_type = PrimitiveType.ERROR;
+            # Check if they match. If not, then there was a constraint violation
+            if expr_type != var_primtype:
 
-        # If no assignment given, set var type based on declaration.
-        else:
+                self.current_scope.define(this_ID, PrimitiveType.ERROR, False);
+                self.type_of[ctx] = PrimitiveType.ERROR;
+                self.error_log.add(ctx, Category.ASSIGN_TO_WRONG_TYPE,
+                                   f"Can't assign {str(expr_type)} to variable of type {var_text}");
+                return;
 
-            if var_type == 'Int':
-                result_type = PrimitiveType.Int;
-            elif var_type == 'Bool':
-                result_type = PrimitiveType.Bool;
-            elif var_type == 'String':
-                result_type = PrimitiveType.String;
 
-        # Setting var type
-        self.current_scope.define(ctx.ID().getText(), result_type, False);
+        # If all input was good, set the variable type accordingly
+        self.current_scope.define(this_ID, var_primtype, False);
         self.type_of[ctx] = self.current_scope.resolve(ctx.ID().getText());
 
 
