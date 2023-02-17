@@ -54,8 +54,8 @@ VALID_EXPRESSIONS = [
     ('("Hello World")', PrimitiveType.String),
     ('(true)', PrimitiveType.Bool),
     ('(false)', PrimitiveType.Bool),
-    #('(32*45)', PrimitiveType.Bool),
-    #('(45+10)', PrimitiveType.Bool),
+    ('(32*45)', PrimitiveType.Int),
+    ('(45+10)', PrimitiveType.Int),
 
     # Tests for MulDiv
     ('12*62', PrimitiveType.Int),
@@ -79,12 +79,13 @@ INVALID_EXPRESSIONS = [
     # Brown tests
     # Can't make invalid tests for literals as it won't go into the method
     # Tests for Parens
-    #('("string"*12)', Category.INVALID_BINARY_OP),
+    ('("string"*12)', Category.INVALID_BINARY_OP),
     #('(!30)', Category.INVALID_NEGATION),
     #('(33+true)', Category.INVALID_BINARY_OP),
 
     # Tests for MulDiv
     ('!!82*12', Category.INVALID_BINARY_OP),
+    ('"string"*12', Category.INVALID_BINARY_OP),
 
     # ------------------ Velasco tests ------------------
 
