@@ -141,7 +141,7 @@ class InferTypesAndCheckConstraints(NimbleListener):
     def exitParens(self, ctx: NimbleParser.ParensContext):
         self.type_of[ctx] = self.type_of[ctx.expr()]
         if self.type_of[ctx.expr()] == PrimitiveType.ERROR:
-            # TODO need to change the error Category to look down at previous error
+            # TODO idk if this is the right way to handle an error but can't find a better way rn
             self.error_log.add(ctx, Category.INVALID_BINARY_OP, f"Error with expression")
 
 

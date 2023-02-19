@@ -80,8 +80,8 @@ INVALID_EXPRESSIONS = [
     # Can't make invalid tests for literals as it won't go into the method
     # Tests for Parens
     ('("string"*12)', Category.INVALID_BINARY_OP),
-    #('(!30)', Category.INVALID_NEGATION),
-    #('(33+true)', Category.INVALID_BINARY_OP),
+    ('(!30)', Category.INVALID_BINARY_OP),
+    ('(33+true)', Category.INVALID_BINARY_OP),
 
     # Tests for MulDiv
     ('!!82*12', Category.INVALID_BINARY_OP),
