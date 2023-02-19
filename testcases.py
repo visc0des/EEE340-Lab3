@@ -25,7 +25,7 @@ Notes:
 
 Instructor's version: 2023-02-08
 """
-
+import sys
 import unittest
 
 from errorlog import Category
@@ -73,7 +73,7 @@ VALID_EXPRESSIONS = [
     ('23+49', PrimitiveType.Int),
     ('16-0', PrimitiveType.Int),
 
-    # Variable
+
 
 
 
@@ -118,21 +118,38 @@ VALID_VARDEC = [
     ('var myString : String = "SomeString"', 'myString', PrimitiveType.String),
     ('var myInt : Int = 100 / 12', 'myInt', PrimitiveType.Int),
 
-    # ^ add some concatenated strings up there. And parens
 
 
+    # todo: ^ add some concatenated strings up there. And parens
 
 ]
 
-# Can only invalidate constraints
 INVALID_VARDEC = [
 
-    ('var myBool : Bool = 100', 'myBool', PrimitiveType.ERROR),
-    ('var veryWrong : Int = "absolutely!"', 'veryWrong', PrimitiveType.ERROR),
-    ('var nooope : String = false', 'nooope', PrimitiveType.ERROR),
+    # Can only invalidate constraints.
+    ('var myBool : Bool = 100', 'myBool', Category.ASSIGN_TO_WRONG_TYPE),
+    ('var veryWrong : Int = "absolutely!"', 'veryWrong', Category.ASSIGN_TO_WRONG_TYPE),
+    ('var nooope : String = false', 'nooope', Category.ASSIGN_TO_WRONG_TYPE),
+
+    # Not considering if passed in variable is mismatched as an error. ie. in
+    # ('var myBool : Bool = 100', 'wrongVar', Category.ASSIGN_TO_WRONG_TYPE),
+    # since this error is encapsulated in the unit tests, and not when doing
+    # semantic analysis on the code.
 
 ]
 
+VALID_VARIABLE = [
+
+    ('var x : Int\nprint x', 'x', PrimitiveType.Int),
+    ('var myBool : Bool = true\nprint myBool', 'myBool', PrimitiveType.Bool),
+
+    # Putting mismatched variable one here
+    # ('var someVar : String = "nope" \nprint nonExist', 'urMom', PrimitiveType.String)
+]
+
+INVALID_VARIABLE = [
+
+]
 
 
 def print_debug_info(source, indexed_types, error_log):
@@ -193,7 +210,7 @@ class TypeTests(unittest.TestCase):
                 self.assertTrue(error_log.includes_exactly(expected_category, 1, expression))
 
 
-    def test_valid_varDec(self):
+    def test_varDec(self):
         """ Thanks for helping with this one sir :).
 
         This function separately tests the varDec semantics. Since only expressions have types,
@@ -201,30 +218,34 @@ class TypeTests(unittest.TestCase):
 
         """
 
+        print("\n\n", "-" * 30, " TESTING VALID VARDEC", "-" * 30, "\n");
+
         # Testing the valid ones
         for var_declaration, variable, expected_type in VALID_VARDEC:
 
             # Execute semantic analysis at script level
             error_log, global_scope, indexed_types = do_semantic_analysis(var_declaration, 'script');
 
-            # Check if error_logs is 0.
+            # Check if there were no errors
             self.assertEqual(0, error_log.total_entries());
 
             # Get the main child scope from within the script scope
             main_scope = global_scope.child_scope_named('$main');
 
-            # Acquiring type given to variable.
-            # Test if it was given a type, and if it is right type.
+            # Acquiring type given to variable. Test if it's not none first
+            # (test if it was given a type), and if it is right type.
             symbol = main_scope.resolve(variable);
-            self.assertIsNotNone(symbol, 'variable [' + variable + '] not defined');
+            self.assertIsNotNone(symbol, 'passed in variable [' + variable + '] not defined. Check for typo.');
             self.assertEqual(expected_type, symbol.type);
 
             # Debug statement
             print(var_declaration + ' -> ' + variable + ' of type ' + str(expected_type) + ' passes the tset.');
 
 
+        print("\n\n", "-" * 30, " TESTING INVALID VARDEC", "-" * 30, "\n");
+
         # Testing the invalid varDecs
-        for var_declaration, variable, expected_type in INVALID_VARDEC:
+        for var_declaration, variable, expected_category in INVALID_VARDEC:
 
             # Execute semantic analysis at script level
             error_log, global_scope, indexed_types = do_semantic_analysis(var_declaration, 'script');
@@ -235,35 +256,52 @@ class TypeTests(unittest.TestCase):
             # Get the main child scope from within the script scope
             main_scope = global_scope.child_scope_named('$main');
 
-            # Acquiring type given to variable - should be ERROR
-            # Test if it was given a type, and if it is right type.
+            # Check if passed in variable was not incorrect (nothing to test if it was incorrect)
             symbol = main_scope.resolve(variable);
-            self.assertIsNotNone(symbol, 'variable [' + variable + '] not defined');
-            self.assertEqual(expected_type, symbol.type);
+            self.assertIsNotNone(symbol, 'passed in variable [' + variable + '] not defined. Check for typo.');
+
+            # Check if var_declaration gives variable type ERROR, and
+            # if error category generated was ASSIGN_TO_WRONG_TYPE.
+            self.assertTrue(error_log.includes_exactly(expected_category, 1, var_declaration.replace(" ", "")))
+            self.assertEqual(PrimitiveType.ERROR, symbol.type);
+
 
             # Debug statement
-            print('Invalid: ' + var_declaration + ' -> ' + variable + ' of type ' + str(expected_type) +
+            print('Invalid: ' + var_declaration + ' -> ' + variable + ' of type ' + str(PrimitiveType.ERROR) +
                   '  passes the test.');
 
 
-    def test_invalid_varDec(self):
+    def test_variable(self):
         """
-        Same as test_valid_varDec(), but for invalid ones.
+        Unit test that tests the semantic validity and invalidity of the created variable expressions.
         """
 
-    # def test_simple_var_dec(self):
-    #     """
-    #     This is an example of a slightly more complicated test. When run with the
-    #     provided code it will fail, since variables aren't yet handled.
-    #
-    #     This function should work with everything else now.
-    #     """
-    #     error_log, global_scope, indexed_types = do_semantic_analysis('var x : Int', 'script')
-    #     self.assertEqual(0, error_log.total_entries())
-    #     main_scope = global_scope.child_scope_named('$main')
-    #     symbol = main_scope.resolve('x')
-    #     self.assertIsNotNone(symbol, 'variable x not defined')
-    #     self.assertEqual(PrimitiveType.Int, symbol.type)
+        print("\n\n", "-" * 30, " TESTING VALID VARIABLES", "-" * 30, "\n");
+
+        # Testing the valid variables
+        for var_script, variable, expected_type in VALID_VARIABLE:
+
+            # Do semantic analysis, and get the symbol of unit test variable (if it exists)
+            # from index_types (symbol should generally be on line 2 in tests.)
+            error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
+            try:
+                symbol = indexed_types[2][variable];
+            except KeyError:
+                raise Exception("ERROR - Passed in unit test variable not found in script. Check for typo.");
+
+            # Check if there were no errors in the script
+            self.assertEqual(0, error_log.total_entries());
+
+            # Ensure that variable is in fact defined (could be mistyped in VALID_VARIABLE)
+            self.assertIsNotNone(symbol, 'variable [' + variable + '] not defined');
+
+            # Check if variable symbol is correct type in indexed_types
+            self.assertEqual(expected_type, symbol.type);
+
+            # Debug statement
+            print("{" + var_script.replace("\n", "; ") + '} -> ' + variable + ' of type ' + str(expected_type) +
+                  ' passes the tset.');
 
 
-
+        # Testing invalid variable uses
+        # todo - next

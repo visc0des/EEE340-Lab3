@@ -206,6 +206,20 @@ class InferTypesAndCheckConstraints(NimbleListener):
 
     def exitVariable(self, ctx: NimbleParser.VariableContext):
 
+        # Simply check if ID is an existing var, or non-error type var.
+        # If not, set type of ctx to be ERROR.
+        this_ID = ctx.ID().getText();
+        symbol_type = self.current_scope.resolve(this_ID);
+
+        if symbol_type is None:
+            self.type_of[ctx] = PrimitiveType.ERROR;
+            self.error_log.add(ctx, Category.UNDEFINED_NAME,
+                               f"Variable {this_ID} is undefined.");
+        else:
+            self.type_of[ctx] = symbol_type;
+
+
+
         # var x : Int = ...
         # print x.                  <-- Testing needs these two together.
 
@@ -214,7 +228,6 @@ class InferTypesAndCheckConstraints(NimbleListener):
         # This means varDec needs to be completed first.
         # !!! CONSIDER USING RESOLVE
 
-        pass;
 
 
     def exitStringLiteral(self, ctx: NimbleParser.StringLiteralContext):
