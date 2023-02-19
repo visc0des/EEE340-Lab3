@@ -15,15 +15,31 @@ Version: TODO: Submission date here
 
 
 Notes:
-    - Currently waiting on reply from Greg about the varDec issue.
-        Recap: Turns out we need to set rule_start_name to varDec in order to for this to be tested.
-               Secondly, if I don't put spaces in the test case for a varDec, ANTLR does it even
-               register this as a varDec, and does not run exitVarDec().
-        Answer: So Greg apparently has provided us with a template on how to test these, since
-        they need to be done separately (oh my god xD that's like the 5th time I don't look into things
-        independently in this lab). We'll be using this to test.
 
-Instructor's version: 2023-02-08
+    1 - So in the testing for variable declarations (and also in the variable tests),
+    one possible case of error involves a mistype of the variable-field in the test case. For example,
+
+    (script = 'var myBool : Bool = 100', variable = 'wrongVar', error_category = Category.ASSIGN_TO_WRONG_TYPE)
+
+    would try to find the type of the variable under name 'wrongVar'. But since the script never declared a variable
+    of such name, then it would obviously result in wrongVar being undefined.
+
+    In terms of variable declaration, indeed this is an error, yet it only is only one that arises in a mistake
+    in writing the unit test.
+
+    Same principal applies in the Variable tests - typing in a mismatching variable name in the variable field that
+    does not correspond to any variable declared in the script would result in KeyError when it tries to find the
+    passed in variables type in the index_types dictionary (of course, it wouldn't exist). However, this would
+    only be a mistake that could occur in the design of the test cases.
+
+    It was deemed worthy to discern the differences between a mistake in the test case design, and an intentionally
+    invalid test case which was meant to fail. Consequently, for both valid and invalid tests of this nature (with
+    a script), there would be a check to see if the passed in variable type was correct - indeed, it would be point-
+    less to carry out any sort of test if the test case itself was not constructed correctly to enable proper testing.
+
+
+
+    Instructor's version: 2023-02-08
 """
 import sys
 import unittest
@@ -139,23 +155,30 @@ INVALID_VARDEC = [
     ('var veryWrong : Int = "absolutely!"', 'veryWrong', Category.ASSIGN_TO_WRONG_TYPE),
     ('var nooope : String = false', 'nooope', Category.ASSIGN_TO_WRONG_TYPE),
 
-    # Not considering if passed in variable is mismatched as an error. ie. in
+    # Including mismatched variable declaration here to acknowledge its existence.
+    # Leaving commented out though since its considered a real test case. Refer to Notes 1 for more info.
     # ('var myBool : Bool = 100', 'wrongVar', Category.ASSIGN_TO_WRONG_TYPE),
-    # since this error is encapsulated in the unit tests, and not when doing
-    # semantic analysis on the code.
+
 
 ]
 
 VALID_VARIABLE = [
 
     ('var x : Int\nprint x', 'x', PrimitiveType.Int),
-    ('var myBool : Bool = true\nprint myBool', 'myBool', PrimitiveType.Bool),
+    ('var myBool : Bool = true\nprint myBool', 'myBool', PrimitiveType.Bool), # todo - figure out this issue.
 
-    # Putting mismatched variable one here
-    # ('var someVar : String = "nope" \nprint nonExist', 'urMom', PrimitiveType.String)
+
 ]
 
 INVALID_VARIABLE = [
+
+
+    ('var varA : String = "varA String"\nprint varB', 'varB', Category.UNDEFINED_NAME),
+    ('var anInt : String = 100\nprint anInt', 'anInt', Category.UNDEFINED_NAME)
+
+    # Including mismatched variable to acknowledge its existence. Leaving commented out
+    # though since its considered a real test case. Refer to Notes 1 for more info.
+    # ('var someVar : String = "nope" \nprint nonExist', 'urMom', PrimitiveType.String)
 
 ]
 
@@ -276,7 +299,7 @@ class TypeTests(unittest.TestCase):
 
             # Debug statement
             print('Invalid: ' + var_declaration + ' -> ' + variable + ' of type ' + str(PrimitiveType.ERROR) +
-                  '  passes the test.');
+                  ' with error ' + str(expected_category) + ' passes the test.');
 
 
     def test_variable(self):
@@ -289,7 +312,7 @@ class TypeTests(unittest.TestCase):
         # Testing the valid variables
         for var_script, variable, expected_type in VALID_VARIABLE:
 
-            # Do semantic analysis, and get the symbol of unit test variable (if it exists)
+            # Do semantic analysis, and get the SYMBOL of unit test variable (if it exists)
             # from index_types (symbol should generally be on line 2 in tests.)
             error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
             try:
@@ -300,16 +323,35 @@ class TypeTests(unittest.TestCase):
             # Check if there were no errors in the script
             self.assertEqual(0, error_log.total_entries());
 
-            # Ensure that variable is in fact defined (could be mistyped in VALID_VARIABLE)
-            self.assertIsNotNone(symbol, 'variable [' + variable + '] not defined');
-
             # Check if variable symbol is correct type in indexed_types
             self.assertEqual(expected_type, symbol.type);
 
             # Debug statement
             print("{" + var_script.replace("\n", "; ") + '} -> ' + variable + ' of type ' + str(expected_type) +
-                  ' passes the tset.');
+                  ' passes the test.');
 
 
-        # Testing invalid variable uses
-        # todo - next
+        print("\n\n", "-" * 30, " TESTING INVALID VARIABLES", "-" * 30, "\n");
+
+        # Testing the valid variables
+        for var_script, variable, expected_category in INVALID_VARIABLE:
+
+            # Do semantic analysis, and get the TYPE (should be error) of unit test variable (if it exists)
+            # from index_types (symbol should generally be on line 2 in tests.)
+            error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
+            try:
+                var_type = indexed_types[2][variable];
+            except KeyError:
+                raise Exception("ERROR - Passed in unit test variable not found in script. Check for typo.");
+
+            # Check to make sure at least 1 error is generated
+            self.assertNotEqual(0, error_log.total_entries());
+
+            # Check if var_declaration gives variable type ERROR, and
+            # if error category generated was ASSIGN_TO_WRONG_TYPE.
+            self.assertTrue(error_log.includes_exactly(expected_category, 2, variable))
+            self.assertEqual(PrimitiveType.ERROR, var_type);
+
+            # Debug statement
+            print("{" + var_script.replace("\n", "; ") + '} -> ' + variable + ' of type ' + str(PrimitiveType.ERROR) +
+                  ' with error ' + str(expected_category) + ' passes the test.');
