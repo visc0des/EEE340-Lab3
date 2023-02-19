@@ -219,17 +219,6 @@ class InferTypesAndCheckConstraints(NimbleListener):
             self.type_of[ctx] = symbol_type;
 
 
-
-        # var x : Int = ...
-        # print x.                  <-- Testing needs these two together.
-
-        # ^ x would be type Int
-        # If a type for x exists in the dictionary, then this variable is set to that type.
-        # This means varDec needs to be completed first.
-        # !!! CONSIDER USING RESOLVE
-
-
-
     def exitStringLiteral(self, ctx: NimbleParser.StringLiteralContext):
         self.type_of[ctx] = PrimitiveType.String
 
