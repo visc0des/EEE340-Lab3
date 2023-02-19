@@ -165,7 +165,9 @@ INVALID_VARDEC = [
 VALID_VARIABLE = [
 
     ('var x : Int\nprint x', 'x', PrimitiveType.Int),
-    ('var myBool : Bool = true\nprint myBool', 'myBool', PrimitiveType.Bool), # todo - figure out this issue.
+    ('var myBool : Bool = true\nprint myBool', 'myBool', PrimitiveType.Bool),
+    # todo - figure out this issue. We are getting an error. Probably because the error is not a the variable level,
+    # but at the variable declaration level.
 
 
 ]
