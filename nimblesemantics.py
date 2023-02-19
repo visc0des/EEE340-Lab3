@@ -170,10 +170,10 @@ class InferTypesAndCheckConstraints(NimbleListener):
                                f"Can't apply {ctx.op.text} to {self.type_of[ctx].name}")
 
     def exitParens(self, ctx: NimbleParser.ParensContext):
-
-
-
-        pass;
+        self.type_of[ctx] = self.type_of[ctx.expr()]
+        if self.type_of[ctx.expr()] == PrimitiveType.ERROR:
+            # TODO idk if this is the right way to handle an error but can't find a better way rn
+            self.error_log.add(ctx, Category.INVALID_BINARY_OP, f"Error with expression")
 
 
     def exitMulDiv(self, ctx: NimbleParser.MulDivContext):

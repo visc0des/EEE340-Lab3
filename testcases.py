@@ -62,6 +62,13 @@ VALID_EXPRESSIONS = [
     ('true', PrimitiveType.Bool),
     ('false', PrimitiveType.Bool),
 
+    # Tests for Parens
+    ('("Hello World")', PrimitiveType.String),
+    ('(true)', PrimitiveType.Bool),
+    ('(false)', PrimitiveType.Bool),
+    ('(32*45)', PrimitiveType.Int),
+    ('(45+10)', PrimitiveType.Int),
+
     # Tests for MulDiv
     ('12*62', PrimitiveType.Int),
     ('1*33', PrimitiveType.Int),
@@ -83,16 +90,20 @@ INVALID_EXPRESSIONS = [
     # Each entry is a pair: (expression source, expected error category)
     # As for VALID_EXPRESSIONS, there should be NO WHITE SPACE in the expressions.
 
-
-
     ('!37', Category.INVALID_NEGATION),
     ('!!37', Category.INVALID_NEGATION),
 
     # Brown tests
     # Can't make invalid tests for literals as it won't go into the method
 
+    # Tests for Parens
+    ('("string"*12)', Category.INVALID_BINARY_OP),
+    ('(!30)', Category.INVALID_BINARY_OP),
+    ('(33+true)', Category.INVALID_BINARY_OP),
+
     # Tests for MulDiv
     ('!!82*12', Category.INVALID_BINARY_OP),
+    ('"string"*12', Category.INVALID_BINARY_OP),
 
     # ------------------ Velasco tests ------------------
 
@@ -130,6 +141,7 @@ INVALID_VARDEC = [
     ('var myBool : Bool = 100', 'myBool', PrimitiveType.ERROR),
     ('var veryWrong : Int = "absolutely!"', 'veryWrong', PrimitiveType.ERROR),
     ('var nooope : String = false', 'nooope', PrimitiveType.ERROR),
+    #('true+99', Category.INVALID_BINARY_OP)
 
 ]
 
