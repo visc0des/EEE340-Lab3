@@ -165,22 +165,26 @@ INVALID_VARDEC = [
 VALID_VARIABLE = [
 
     ('var x : Int\nprint x', 'x', PrimitiveType.Int),
-    ('var myBool : Bool = true\nprint myBool', 'myBool', PrimitiveType.Bool),
-    # todo - figure out this issue. We are getting an error. Probably because the error is not a the variable level,
-    # but at the variable declaration level.
+    ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'myBool', PrimitiveType.Bool),
+    ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'y', PrimitiveType.String),
+
 
 
 ]
 
 INVALID_VARIABLE = [
 
+    # Testing for this will be carried out a little differently - we want
+    # to find all the UNDEFINED_NAME errors that exist in the script,
+    # not just highlight ones specifically and completely ignore the rest.
 
-    ('var varA : String = "varA String"\nprint varB', 'varB', Category.UNDEFINED_NAME),
-    ('var anInt : String = 100\nprint anInt', 'anInt', Category.UNDEFINED_NAME)
+    'var varA : String = "varA String"\nprint varB',
+    'var anInt : String = 100 / "String"\nprint anInt',
+    'var newVar : String = "WasCompEngWorthIt?"\nprint newVar\nprint x',
 
-    # Including mismatched variable to acknowledge its existence. Leaving commented out
-    # though since its considered a real test case. Refer to Notes 1 for more info.
-    # ('var someVar : String = "nope" \nprint nonExist', 'urMom', PrimitiveType.String)
+    # Leaving commented out a poorly designed test of invalid variables to acknowledge its existence -
+    # this one does not even have an undefined name error. Safe to say it's in the wrong testing list.
+    # ('var someVar : String = 12', Category.UNDEFINED_NAME)
 
 ]
 
@@ -314,13 +318,16 @@ class TypeTests(unittest.TestCase):
         # Testing the valid variables
         for var_script, variable, expected_type in VALID_VARIABLE:
 
-            # Do semantic analysis, and get the SYMBOL of unit test variable (if it exists)
-            # from index_types (symbol should generally be on line 2 in tests.)
+            # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
             error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
-            try:
-                symbol = indexed_types[2][variable];
-            except KeyError:
-                raise Exception("ERROR - Passed in unit test variable not found in script. Check for typo.");
+            main_scope = global_scope.child_scope_named('$main');
+            symbol = main_scope.resolve(variable);
+
+            # Check if symbol is not NoneType. If it is, means passed
+            # in unit test variable was never declared.
+            if symbol is None:
+                raise Exception(f"ERROR - Passed in unit test variable <{variable}> not found in script. "
+                                f"Check for typo.");
 
             # Check if there were no errors in the script
             self.assertEqual(0, error_log.total_entries());
@@ -330,30 +337,40 @@ class TypeTests(unittest.TestCase):
 
             # Debug statement
             print("{" + var_script.replace("\n", "; ") + '} -> ' + variable + ' of type ' + str(expected_type) +
-                  ' passes the test.');
+                  ' exists - passes the test.');
 
 
         print("\n\n", "-" * 30, " TESTING INVALID VARIABLES", "-" * 30, "\n");
 
-        # Testing the valid variables
-        for var_script, variable, expected_category in INVALID_VARIABLE:
 
-            # Do semantic analysis, and get the TYPE (should be error) of unit test variable (if it exists)
-            # from index_types (symbol should generally be on line 2 in tests.)
+        # Testing the invalid variables
+        for var_script in INVALID_VARIABLE:
+
+            # Do semantic analysis
             error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
-            try:
-                var_type = indexed_types[2][variable];
-            except KeyError:
-                raise Exception("ERROR - Passed in unit test variable not found in script. Check for typo.");
 
             # Check to make sure at least 1 error is generated
             self.assertNotEqual(0, error_log.total_entries());
 
-            # Check if var_declaration gives variable type ERROR, and
-            # if error category generated was ASSIGN_TO_WRONG_TYPE.
-            self.assertTrue(error_log.includes_exactly(expected_category, 2, variable))
-            self.assertEqual(PrimitiveType.ERROR, var_type);
+            # Finding which line the UNDEFINED_NAME category error exists.
+            # If none found, then the invalid test case itself was invalid (ironic).
+            found_line = 0;
+            for i in range(1, len(indexed_types) + 1):
+                if error_log.includes_on_line(Category.UNDEFINED_NAME, i):
+                    found_line = i;
+                    break;
+            if found_line == 0:
+                raise Exception("ERROR - No UNDEFINED_NAME category error found.");
 
-            # Debug statement
-            print("{" + var_script.replace("\n", "; ") + '} -> ' + variable + ' of type ' + str(PrimitiveType.ERROR) +
-                  ' with error ' + str(expected_category) + ' passes the test.');
+            # No point in checking if it has PrimitiveType.ERROR - if it has a Category.UNDEFINED_NAME
+            # error in it, then yes, it's an error. It'd be redundant to do assert test its type.
+
+            # Debug statement (also print any other errors which may have been cause of UNDEFINED_NAME error)
+            print("\n{" + var_script.replace("\n", "; ") + '} -> One or more ' + str(PrimitiveType.ERROR) +
+                  ':' + str(Category.UNDEFINED_NAME) + '(s) found in the script - passes the test.');
+            error_list = "\n\t\t\t".join(error_log.__str__().splitlines());
+            print('\t╰─ All errors that were found in script - one may have caused UNDEFINED_NAME error:\n\t\t\t'
+                  + error_list);
+
+
+

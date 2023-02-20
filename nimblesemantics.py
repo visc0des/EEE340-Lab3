@@ -211,7 +211,7 @@ class InferTypesAndCheckConstraints(NimbleListener):
         this_ID = ctx.ID().getText();
         symbol_type = self.current_scope.resolve(this_ID);
 
-        if symbol_type is None:
+        if symbol_type is None or symbol_type.type == PrimitiveType.ERROR:
             self.type_of[ctx] = PrimitiveType.ERROR;
             self.error_log.add(ctx, Category.UNDEFINED_NAME,
                                f"Variable {this_ID} is undefined.");
