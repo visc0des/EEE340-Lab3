@@ -48,6 +48,8 @@ from errorlog import Category
 from symboltable import PrimitiveType
 from testhelpers import do_semantic_analysis, pretty_types
 
+# ---- DAWG, WE NEEDA PUT THIS IN A SEPARATE HEADER FILE LMAO ----
+
 VALID_EXPRESSIONS = [
     # Each entry is a pair: (expression source, expected type)
     # Due to the way the inferred_types are stored, using ctx.getText() as the key,
@@ -146,6 +148,7 @@ INVALID_EXPRESSIONS = [
 
 ]
 
+
 # Creating custom list of VarDec - by Velasco
 VALID_VARDEC = [
 
@@ -200,7 +203,7 @@ INVALID_VARIABLE = [
     'var newVar : String = "WasCompEngWorthIt?"\nprint newVar\nprint x',
 
     # Leaving commented out a poorly designed test of invalid variables to acknowledge its existence -
-    # this one does not even have an undefined name error. Safe to say it's in the wrong testing list.
+    # this one does not even have an undefined name error. It's literally in the wrong testing list.
     # ('var someVar : String = 12', Category.UNDEFINED_NAME)
 
 ]
@@ -229,6 +232,25 @@ INVALID_PRINT = [
     ('print(12<!20)', [Category.INVALID_BINARY_OP, Category.INVALID_BINARY_OP, Category.INVALID_NEGATION]),
     # ^ right yeah, there would be two invalid binary op, one from 12<!20 and another from (12<!20)
 
+]
+
+VALID_ASSIGNMENT = [
+
+    ('var myInt : Int\nmyInt = -100', 'myInt', PrimitiveType.Int),
+    ('var myString : String\nmyString = "SomeString"', 'myString', PrimitiveType.String),
+    ('var myInt : Int\nmyInt = 100 / 12', 'myInt', PrimitiveType.Int),
+    ('var myBool : Bool\nmyBool = !true', 'myBool', PrimitiveType.Bool),
+    ('var myInt : Int\nvar myGuy : String\nmyInt = (10 - 20)', 'myInt', PrimitiveType.Int),
+
+]
+
+INVALID_ASSIGNMENT = [
+
+    # Add more later
+
+    ('myInt = 12', Category.UNDEFINED_NAME),
+    ('var myString : String\nmyString = true', Category.ASSIGN_TO_WRONG_TYPE),
+    ('var myInt : Int\nvar myGuy : String\nmyPerson = (10 - 20)', Category.UNDEFINED_NAME)
 
 ]
 
@@ -385,7 +407,6 @@ class TypeTests(unittest.TestCase):
 
         print("\n\n", "-" * 30, " TESTING INVALID VARIABLES", "-" * 30, "\n");
 
-
         # Testing the invalid variables
         for var_script in INVALID_VARIABLE:
 
@@ -466,12 +487,64 @@ class TypeTests(unittest.TestCase):
                   + str(expected_category_list) + ' found in script - passes the test.');
 
 
+    def test_assignment(self):
+
+        # Testing valid print statements
+        print("\n\n", "-" * 30, " TESTING VALID ASSIGNMENTS", "-" * 30, "\n");
+
+        for assignment_script, variable, expected_type in VALID_ASSIGNMENT:
+
+            # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
+            error_log, global_scope, indexed_types = do_semantic_analysis(assignment_script, 'script');
+            main_scope = global_scope.child_scope_named('$main');
+            symbol = main_scope.resolve(variable);
+
+            # Check if symbol is not NoneType. If it is, means passed
+            # in unit test variable was never declared.
+            if symbol is None:
+                raise Exception(f"ERROR - Passed in unit test variable <{variable}> not found in script. "
+                                f"Check for typo.");
+
+            # Check if there were no errors in the script
+            self.assertEqual(0, error_log.total_entries());
+
+            # Check if variable symbol is correct type in indexed_types
+            self.assertEqual(expected_type, symbol.type);
+
+            # Debug statement
+            print("{" + assignment_script.replace("\n", "; ") + '} -> ' + variable + ' of type ' + str(expected_type) +
+                  ' successfully defined - passes the test.');
 
 
+        # Testing the invalid print statements
+        print("\n\n", "-" * 30, " TESTING INVALID ASSIGNMENTS", "-" * 30, "\n");
 
+        # Testing the invalid variables
+        for var_script, expected_category in INVALID_ASSIGNMENT:
 
+            # Do semantic analysis
+            error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
 
+            # Check to make sure at least 1 error is generated
+            self.assertNotEqual(0, error_log.total_entries());
 
+            # Checking to see if we have the expected error occur in the script.
+            # If none found, then the invalid test case itself was invalid (ironic).
+            found_line = 0;
+            for i in range(1, len(indexed_types) + 1):
+                if error_log.includes_on_line(expected_category, i):
+                    found_line = i;
+                    break;
+            if found_line == 0:
+                raise Exception(f"ERROR - No {expected_category} category error found.");
+
+            # No point in checking if it has PrimitiveType.ERROR - if it has a Category.UNDEFINED_NAME
+            # error in it, then yes, it's an error. It'd be redundant to do assert test its type.
+
+            # Debug statement (also print any other errors which may have been cause of UNDEFINED_NAME error)
+            print("{" + var_script.replace("\n", "; ") + '} -> Error ' + str(PrimitiveType.ERROR) +
+                  ':' + str(expected_category) + f'(s) found in script @ line {found_line} - '
+                                                       f'passes the test.');
 
 
 

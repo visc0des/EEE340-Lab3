@@ -139,7 +139,31 @@ class InferTypesAndCheckConstraints(NimbleListener):
     # --------------------------------------------------------
 
     def exitAssignment(self, ctx: NimbleParser.AssignmentContext):
-        pass
+
+        # The variable ID must already be declared, and be of the same type as
+        # expr. If conditions are met, the variable under ID takes on type of expr.
+        # Otherwise, gets type ERROR
+
+        this_ID = ctx.ID().getText();
+        expr_type = self.type_of[ctx.expr()];
+        symbol = self.current_scope.resolve(this_ID);
+
+        # Checking if variable under ID has been declared. If not, set ERROR
+        if symbol is None:
+            self.type_of[ctx] = PrimitiveType.ERROR;
+            self.error_log.add(ctx, Category.UNDEFINED_NAME, f"Can't assign value to undefined variable {this_ID}");
+            return;
+
+        # Otherwise, check if expr_type matches variable type. Set ctx type accordingly.
+        # (Already handles setting ID variable to ERROR in case expr_type is error).
+        if symbol.type == expr_type:
+            self.type_of[ctx] = expr_type;
+        else:
+            self.type_of[ctx] = PrimitiveType.ERROR;
+            self.error_log.add(ctx, Category.ASSIGN_TO_WRONG_TYPE, f"Can't assign value of type {expr_type} to variable"
+                                                                   f" {this_ID} of type {symbol.type}.");
+
+
 
     def exitWhile(self, ctx: NimbleParser.WhileContext):
         pass
