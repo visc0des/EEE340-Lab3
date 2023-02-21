@@ -107,6 +107,8 @@ VALID_EXPRESSIONS = [
 
 
 
+
+
 ]
 
 INVALID_EXPRESSIONS = [
@@ -181,6 +183,7 @@ VALID_VARIABLE = [
     ('var x : Int\nprint x', 'x', PrimitiveType.Int),
     ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'myBool', PrimitiveType.Bool),
     ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'y', PrimitiveType.String),
+    ('var someVar : Bool = (30 == 40)\nprint someVar', 'someVar', PrimitiveType.Bool),
 
 ]
 
@@ -199,6 +202,33 @@ INVALID_VARIABLE = [
     # Leaving commented out a poorly designed test of invalid variables to acknowledge its existence -
     # this one does not even have an undefined name error. Safe to say it's in the wrong testing list.
     # ('var someVar : String = 12', Category.UNDEFINED_NAME)
+
+]
+
+
+# Making a custom list of print statements to include print statements with variables.
+# Yeah turns out it needs to be put here since its root start rule is 'script', not 'expr'
+VALID_PRINT = [
+
+    # Will only be putting in non-variable print scripts. The ones with variables
+    # have already been tested in VALID_VARIABLE
+
+    # Non-variable print statements. NEED TO PUT PARENTHESES, OR SOME
+    # CHARACTER SEPARATOR FROM PRINT IN ORDER FOR IT TO PARSE PROPERLY
+    ('print"ChocolateRain"', PrimitiveType.String),
+    ('print(1+3)*12', PrimitiveType.Int),
+    ('print!(12<-20)', PrimitiveType.Bool),
+
+]
+
+INVALID_PRINT = [
+
+    # Let's see if we can incur multiple errors into it
+    ('print""==-false', [Category.INVALID_BINARY_OP, Category.INVALID_NEGATION]),
+    ('print(1+3)*"Im an integer"', [Category.INVALID_BINARY_OP]),
+    ('print(12<!20)', [Category.INVALID_BINARY_OP, Category.INVALID_BINARY_OP, Category.INVALID_NEGATION]),
+    # ^ right yeah, there would be two invalid binary op, one from 12<!20 and another from (12<!20)
+
 
 ]
 
@@ -225,9 +255,6 @@ class TypeTests(unittest.TestCase):
         in the error_log.
         """
         for expression, expected_type in VALID_EXPRESSIONS:
-
-            if expression == 'varmyBool:Bool':
-                print("What's up");
 
             error_log, global_scope, indexed_types = do_semantic_analysis(expression, 'expr')
 
@@ -387,6 +414,66 @@ class TypeTests(unittest.TestCase):
             error_list = "\n\t\t\t".join(error_log.__str__().splitlines());
             print('\t╰─ All errors that were found in script - one may have caused UNDEFINED_NAME error:\n\t\t\t'
                   + error_list);
+
+
+    def test_print(self):
+        """
+        Unit tests for semantic validity in regard to the print statement tests.
+        """
+
+        # Testing valid print statements
+        print("\n\n", "-" * 30, " TESTING VALID PRINT STATEMENTS", "-" * 30, "\n");
+
+        # Testing the valid print statements
+        for print_script, expected_type in VALID_PRINT:
+
+            # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
+            error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script');
+            main_scope = global_scope.child_scope_named('$main');
+
+
+            # Check if there were no errors in the script
+            self.assertEqual(0, error_log.total_entries());
+
+            # Check if variable symbol is correct type in indexed_types
+            self.assertEqual(expected_type, indexed_types[1][print_script]);
+
+            # Debug statement
+            print("{" + print_script.replace("\n", "; ") + '} -> script is of type ' + str(expected_type) +
+                  ' - passes the test.');
+
+
+        # Testing the invalid print statements
+        print("\n\n", "-" * 30, " TESTING INVALID PRINT STATEMENTS", "-" * 30, "\n");
+        for print_script, expected_category_list in INVALID_PRINT:
+
+            # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
+            error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script');
+            main_scope = global_scope.child_scope_named('$main');
+
+            # Check if errors caught were exactly as many errors in expected_category_list
+            if len(expected_category_list) != error_log.total_entries():
+                raise Exception(f"ERROR - Number of detected errors in script does "
+                                f"not match number of errors expected.");
+
+            # Checking in error_log if we have all the expected errors in the print_script
+            for this_cat in expected_category_list:
+                if not error_log.includes_on_line(this_cat, 1):
+                    raise Exception(f"ERROR - Category error of {this_cat} not in script.");
+
+            # Debug statement
+            print("{" + print_script.replace("\n", "; ") + '} -> category errors '
+                  + str(expected_category_list) + ' found in script - passes the test.');
+
+
+
+
+
+
+
+
+
+
 
 
 

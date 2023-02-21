@@ -148,7 +148,14 @@ class InferTypesAndCheckConstraints(NimbleListener):
         pass
 
     def exitPrint(self, ctx: NimbleParser.PrintContext):
-        pass
+
+        # todo - verify if this is what Greg is looking for
+
+        # Minimum condition is that if it's not error, then it can be printed.
+        # If trying to print bool, result in bool. If trying to print string,
+        # results in string. If int, results in int. If error, then error.
+        self.type_of[ctx] = self.type_of[ctx.expr()];
+
 
     # --------------------------------------------------------
     # Expressions
@@ -219,8 +226,6 @@ class InferTypesAndCheckConstraints(NimbleListener):
             self.type_of[ctx] = PrimitiveType.ERROR;
             self.error_log.add(ctx, Category.INVALID_BINARY_OP, f"Can't compare two non-integer type expressions.");
 
-
-        pass;
 
     def exitVariable(self, ctx: NimbleParser.VariableContext):
 
