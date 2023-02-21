@@ -97,6 +97,8 @@ class InferTypesAndCheckConstraints(NimbleListener):
         pass
 
     def exitBlock(self, ctx: NimbleParser.BlockContext):
+        # TODO I don't think anything actually needs to be done here as it will never have an error
+        #  and doesn't need typed.
         pass
 
     # --------------------------------------------------------
