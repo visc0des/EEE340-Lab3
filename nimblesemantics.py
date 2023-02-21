@@ -157,17 +157,23 @@ class InferTypesAndCheckConstraints(NimbleListener):
     def exitIntLiteral(self, ctx: NimbleParser.IntLiteralContext):
         self.type_of[ctx] = PrimitiveType.Int
 
+
     def exitNeg(self, ctx: NimbleParser.NegContext):
 
-        """ TODO: Extend to handle boolean negation. """
-
+        # Are conditions met for an integer negation?
         if ctx.op.text == '-' and self.type_of[ctx.expr()] == PrimitiveType.Int:
             self.type_of[ctx] = PrimitiveType.Int
 
+        # Are conditions met for a boolean negation?
+        elif ctx.op.text == '!' and self.type_of[ctx.expr()] == PrimitiveType.Bool:
+            self.type_of[ctx] = PrimitiveType.Bool;
+
+        # If none, then error had occurred.
         else:
             self.type_of[ctx] = PrimitiveType.ERROR
             self.error_log.add(ctx, Category.INVALID_NEGATION,
                                f"Can't apply {ctx.op.text} to {self.type_of[ctx].name}")
+
 
     def exitParens(self, ctx: NimbleParser.ParensContext):
         self.type_of[ctx] = self.type_of[ctx.expr()]
@@ -202,7 +208,19 @@ class InferTypesAndCheckConstraints(NimbleListener):
 
 
     def exitCompare(self, ctx: NimbleParser.CompareContext):
-        pass
+
+        # Both left and right expressions must be integers. Results in a boolean type.
+        # If these conditions are not met, error had occurred.
+        left = self.type_of[ctx.expr(0)];
+        right = self.type_of[ctx.expr(1)];
+        if left == PrimitiveType.Int and right == PrimitiveType.Int:
+            self.type_of[ctx] = PrimitiveType.Bool;
+        else:
+            self.type_of[ctx] = PrimitiveType.ERROR;
+            self.error_log.add(ctx, Category.INVALID_BINARY_OP, f"Can't compare two non-integer type expressions.");
+
+
+        pass;
 
     def exitVariable(self, ctx: NimbleParser.VariableContext):
 
