@@ -254,6 +254,13 @@ INVALID_ASSIGNMENT = [
 
 ]
 
+WHILES = [
+    # Test takes two arguments, First is a while statement to test, second is True if errors exist.
+    ('while true { }', False),
+    ('while 10 + 10 {}', True),
+    ('while !10 == 5 {}', True)
+]
+
 
 def print_debug_info(source, indexed_types, error_log):
     """
@@ -546,7 +553,12 @@ class TypeTests(unittest.TestCase):
                   ':' + str(expected_category) + f'(s) found in script @ line {found_line} - '
                                                        f'passes the test.');
 
-
-
-
-
+    def test_while(self):
+        # Testing for both valid and invalid while statements
+        for while_statement, has_errors in WHILES:
+            error_log, global_scope, indexed_types = do_semantic_analysis(while_statement, "statement", False)
+            if has_errors:
+                self.assertTrue(error_log.includes_on_line(Category.CONDITION_NOT_BOOL, 1))
+                self.assertNotEqual(0, error_log.total_entries())
+            else:
+                self.assertEqual(0, error_log.total_entries())
