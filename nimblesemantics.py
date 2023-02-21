@@ -171,7 +171,8 @@ class InferTypesAndCheckConstraints(NimbleListener):
 
 
     def exitWhile(self, ctx: NimbleParser.WhileContext):
-        pass
+        if self.type_of[ctx.expr()] != PrimitiveType.Bool:
+            self.error_log.add(ctx, Category.CONDITION_NOT_BOOL, f"Type {self.type_of[ctx.expr()]} is not of type bool")
 
     def exitIf(self, ctx: NimbleParser.IfContext):
         pass
