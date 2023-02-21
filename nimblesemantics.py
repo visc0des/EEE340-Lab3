@@ -1,4 +1,7 @@
 """
+TODO remove types from statements
+    Only need to check for constraints
+
 Group members: OCdt Liethan Velasco and OCdt Aaron Brown
 
 Version: TODO: completion date
