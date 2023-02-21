@@ -257,8 +257,12 @@ INVALID_ASSIGNMENT = [
 WHILES = [
     # Test takes two arguments, First is a while statement to test, second is True if errors exist.
     ('while true { }', False),
+    ('while 10 == 10 { print 10 + 10 }', False),
+    ('while false { while 10 < 5 { print "string" } }', False),
     ('while 10 + 10 {}', True),
-    ('while !10 == 5 {}', True)
+    ('while !10 == 5 {}', True),
+    ('while "string" {}', True),
+    ('while "str" + 10 { myInt = 12 }', True),
 ]
 
 
