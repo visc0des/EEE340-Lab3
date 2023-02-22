@@ -171,6 +171,7 @@ INVALID_VARDEC = [
     ('var myBool : Bool = 100', 'myBool', Category.ASSIGN_TO_WRONG_TYPE),
     ('var veryWrong : Int = "absolutely!"', 'veryWrong', Category.ASSIGN_TO_WRONG_TYPE),
     ('var nooope : String = false', 'nooope', Category.ASSIGN_TO_WRONG_TYPE),
+    ('var duplicateThis : Bool = true\nvar duplicateThis : Int = 30', 'duplicateThis', Category.DUPLICATE_NAME),
 
     # Including mismatched variable declaration here to acknowledge its existence.
     # Leaving commented out though since its considered a real test case. Refer to Notes 1 for more info.
@@ -187,6 +188,7 @@ VALID_VARIABLE = [
     ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'myBool', PrimitiveType.Bool),
     ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'y', PrimitiveType.String),
     ('var someVar : Bool = (30 == 40)\nprint someVar', 'someVar', PrimitiveType.Bool),
+
 
 ]
 
@@ -240,6 +242,7 @@ VALID_ASSIGNMENT = [
     ('var myInt : Int\nmyInt = 100 / 12', 'myInt', PrimitiveType.Int),
     ('var myBool : Bool\nmyBool = !true', 'myBool', PrimitiveType.Bool),
     ('var myInt : Int\nvar myGuy : String\nmyInt = (10 - 20)', 'myInt', PrimitiveType.Int),
+    ('var setThrice : Int = 30\nsetThrice = 31\nsetThrice = 32', 'setThrice', PrimitiveType.Int),
 
 ]
 
@@ -249,7 +252,8 @@ INVALID_ASSIGNMENT = [
 
     ('myInt = 12', Category.UNDEFINED_NAME),
     ('var myString : String\nmyString = true', Category.ASSIGN_TO_WRONG_TYPE),
-    ('var myInt : Int\nvar myGuy : String\nmyPerson = (10 - 20)', Category.UNDEFINED_NAME)
+    ('var myInt : Int\nvar myGuy : String\nmyPerson = (10 - 20)', Category.UNDEFINED_NAME),
+    ('var myVar : Int\nvar myVar : Bool\nmyVar = !true', Category.DUPLICATE_NAME),
 
 ]
 
@@ -373,10 +377,16 @@ class TypeTests(unittest.TestCase):
             self.assertIsNotNone(symbol, 'passed in variable [' + variable + '] not defined. Check for typo.');
 
             # Check if var_declaration gives variable type ERROR, and
-            # if error category generated was ASSIGN_TO_WRONG_TYPE.
-            self.assertTrue(error_log.includes_exactly(expected_category, 1, var_declaration.replace(" ", "")))
+            # if we found the expected generated error in the error log
             self.assertEqual(PrimitiveType.ERROR, symbol.type);
-
+            script_lines = len(var_declaration.splitlines());
+            found = 0;
+            for i in range(1, script_lines + 1):
+                if error_log.includes_on_line(expected_category, i):
+                    found = 1
+                    break;
+            if found == 0:
+                raise Exception(f"ERROR - No {expected_category} category error found.");
 
             # Debug statement
             print('Invalid: ' + var_declaration + ' -> ' + variable + ' of type ' + str(PrimitiveType.ERROR) +

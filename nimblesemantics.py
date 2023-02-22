@@ -1,6 +1,4 @@
 """
-TODO remove types from statements
-    Only need to check for constraints
 
 TODO need to check if ID is used in multiple varDecs
 
@@ -120,7 +118,15 @@ class InferTypesAndCheckConstraints(NimbleListener):
         var_primtype = type_dict[var_text];
         this_ID = ctx.ID().getText();
 
-        # Second, if there was an assignment, check if does not violate type constraint
+        # First thing to check is if we're declaring a duplicated variable name. Set ERROR if so and stop function.
+        if self.current_scope.resolve(this_ID) is not None:
+            self.current_scope.define(this_ID, PrimitiveType.ERROR, False);
+            self.error_log.add(ctx, Category.DUPLICATE_NAME, f"Previously declared variable already has name"
+                                                             f"{this_ID}. No duplicates are allowed.");
+            return;
+
+        # If no duplicate name, and if there was an assignment,
+        # check if does not violate type constraint
         if ctx.expr() is not None:
 
             # Extract value of expression put for assignment
@@ -179,7 +185,6 @@ class InferTypesAndCheckConstraints(NimbleListener):
         if self.type_of[ctx.expr()] == PrimitiveType.ERROR:
             self.error_log.add(ctx, Category.UNPRINTABLE_EXPRESSION, f"Can't print expression of type "
                                                                      f"{PrimitiveType.ERROR}.");
-
 
 
     # --------------------------------------------------------
