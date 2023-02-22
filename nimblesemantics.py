@@ -136,9 +136,8 @@ class InferTypesAndCheckConstraints(NimbleListener):
                 return;
 
 
-        # If all input was good, set the variable type accordingly
+        # If all input conditions met, create the symbol with the inuptted typeset the variable type accordingly
         self.current_scope.define(this_ID, var_primtype, False);
-        self.type_of[ctx] = self.current_scope.resolve(ctx.ID().getText());
 
 
     # --------------------------------------------------------
@@ -148,45 +147,39 @@ class InferTypesAndCheckConstraints(NimbleListener):
     def exitAssignment(self, ctx: NimbleParser.AssignmentContext):
 
         # The variable ID must already be declared, and be of the same type as
-        # expr. If conditions are met, the variable under ID takes on type of expr.
+        # expr. If conditions are met, the variable symbol named ID takes on type of expr.
         # Otherwise, gets type ERROR
 
         this_ID = ctx.ID().getText();
         expr_type = self.type_of[ctx.expr()];
         symbol = self.current_scope.resolve(this_ID);
 
-        # Checking if variable under ID has been declared. If not, set ERROR
+        # Checking if variable under ID has been declared. If not, record the error
         if symbol is None:
-            self.type_of[ctx] = PrimitiveType.ERROR;
             self.error_log.add(ctx, Category.UNDEFINED_NAME, f"Can't assign value to undefined variable {this_ID}");
             return;
 
-        # Otherwise, check if expr_type matches variable type. Set ctx type accordingly.
-        # (Already handles setting ID variable to ERROR in case expr_type is error).
-        if symbol.type == expr_type:
-            self.type_of[ctx] = expr_type;
-        else:
-            self.type_of[ctx] = PrimitiveType.ERROR;
+        # Otherwise, check if expr_type does not match variable type. If not, record the error
+        if symbol.type != expr_type:
             self.error_log.add(ctx, Category.ASSIGN_TO_WRONG_TYPE, f"Can't assign value of type {expr_type} to variable"
                                                                    f" {this_ID} of type {symbol.type}.");
-
 
 
     def exitWhile(self, ctx: NimbleParser.WhileContext):
         if self.type_of[ctx.expr()] != PrimitiveType.Bool:
             self.error_log.add(ctx, Category.CONDITION_NOT_BOOL, f"Type {self.type_of[ctx.expr()]} is not of type bool")
 
+
     def exitIf(self, ctx: NimbleParser.IfContext):
         pass
 
     def exitPrint(self, ctx: NimbleParser.PrintContext):
 
-        # todo - verify if this is what Greg is looking for
+        # If expression to print is of type ERROR, record accordingly in error log.
+        if self.type_of[ctx.expr()] == PrimitiveType.ERROR:
+            self.error_log.add(ctx, Category.UNPRINTABLE_EXPRESSION, f"Can't print expression of type "
+                                                                     f"{PrimitiveType.ERROR}.");
 
-        # Minimum condition is that if it's not error, then it can be printed.
-        # If trying to print bool, result in bool. If trying to print string,
-        # results in string. If int, results in int. If error, then error.
-        self.type_of[ctx] = self.type_of[ctx.expr()];
 
 
     # --------------------------------------------------------

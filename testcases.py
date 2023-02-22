@@ -216,21 +216,20 @@ VALID_PRINT = [
     # Will only be putting in non-variable print scripts. The ones with variables
     # have already been tested in VALID_VARIABLE
 
-    # Non-variable print statements. NEED TO PUT PARENTHESES, OR SOME
-    # CHARACTER SEPARATOR FROM PRINT IN ORDER FOR IT TO PARSE PROPERLY
-    ('print"ChocolateRain"', PrimitiveType.String),
-    ('print(1+3)*12', PrimitiveType.Int),
-    ('print!(12<-20)', PrimitiveType.Bool),
+    ('print "ChocolateRain"', PrimitiveType.String),
+    ('print (1 + 3) * 12', PrimitiveType.Int),
+    ('print !(12 < -20)', PrimitiveType.Bool),
 
 ]
 
 INVALID_PRINT = [
 
     # Let's see if we can incur multiple errors into it
-    ('print""==-false', [Category.INVALID_BINARY_OP, Category.INVALID_NEGATION]),
-    ('print(1+3)*"Im an integer"', [Category.INVALID_BINARY_OP]),
-    ('print(12<!20)', [Category.INVALID_BINARY_OP, Category.INVALID_BINARY_OP, Category.INVALID_NEGATION]),
-    # ^ right yeah, there would be two invalid binary op, one from 12<!20 and another from (12<!20)
+    ('print "" == -false', [Category.INVALID_BINARY_OP, Category.INVALID_NEGATION, Category.UNPRINTABLE_EXPRESSION]),
+    ('print (1 + 3) * "Im an integer"', [Category.INVALID_BINARY_OP, Category.UNPRINTABLE_EXPRESSION]),
+    ('print (12 < !20)', [Category.INVALID_BINARY_OP, Category.INVALID_BINARY_OP,
+                          Category.INVALID_NEGATION, Category.UNPRINTABLE_EXPRESSION]),
+
 
 ]
 
@@ -461,17 +460,12 @@ class TypeTests(unittest.TestCase):
 
             # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
             error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script');
-            main_scope = global_scope.child_scope_named('$main');
-
 
             # Check if there were no errors in the script
             self.assertEqual(0, error_log.total_entries());
 
-            # Check if variable symbol is correct type in indexed_types
-            self.assertEqual(expected_type, indexed_types[1][print_script]);
-
             # Debug statement
-            print("{" + print_script.replace("\n", "; ") + '} -> script is of type ' + str(expected_type) +
+            print("{" + print_script.replace("\n", "; ") + '} -> print script resulted in no errors' +
                   ' - passes the test.');
 
 
@@ -481,7 +475,6 @@ class TypeTests(unittest.TestCase):
 
             # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
             error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script');
-            main_scope = global_scope.child_scope_named('$main');
 
             # Check if errors caught were exactly as many errors in expected_category_list
             if len(expected_category_list) != error_log.total_entries():
@@ -494,9 +487,11 @@ class TypeTests(unittest.TestCase):
                     raise Exception(f"ERROR - Category error of {this_cat} not in script.");
 
             # Debug statement
-            print("{" + print_script.replace("\n", "; ") + '} -> category errors '
+            print("\n{" + print_script.replace("\n", "; ") + '} -> category errors '
                   + str(expected_category_list) + ' found in script - passes the test.');
-
+            error_list = "\n\t\t\t".join(error_log.__str__().splitlines());
+            print('\t╰─ All errors that were found in script:\n\t\t\t'
+                  + error_list);
 
     def test_assignment(self):
 
@@ -539,10 +534,11 @@ class TypeTests(unittest.TestCase):
             # Check to make sure at least 1 error is generated
             self.assertNotEqual(0, error_log.total_entries());
 
-            # Checking to see if we have the expected error occur in the script.
+            # Look through error_log to see if expected error occured in the script.
             # If none found, then the invalid test case itself was invalid (ironic).
             found_line = 0;
-            for i in range(1, len(indexed_types) + 1):
+            script_lines = len(var_script.splitlines());
+            for i in range(1, script_lines + 1):
                 if error_log.includes_on_line(expected_category, i):
                     found_line = i;
                     break;
@@ -553,9 +549,12 @@ class TypeTests(unittest.TestCase):
             # error in it, then yes, it's an error. It'd be redundant to do assert test its type.
 
             # Debug statement (also print any other errors which may have been cause of UNDEFINED_NAME error)
-            print("{" + var_script.replace("\n", "; ") + '} -> Error ' + str(PrimitiveType.ERROR) +
+            print("\n{" + var_script.replace("\n", "; ") + '} -> Error ' + str(PrimitiveType.ERROR) +
                   ':' + str(expected_category) + f'(s) found in script @ line {found_line} - '
                                                        f'passes the test.');
+            error_list = "\n\t\t\t".join(error_log.__str__().splitlines());
+            print(f'\t╰─ All errors that were found in script - one may have caused {expected_category} error:\n\t\t\t'
+                  + error_list);
 
     def test_while(self):
         # Testing for both valid and invalid while statements
