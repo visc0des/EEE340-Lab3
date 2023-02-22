@@ -47,226 +47,8 @@ import unittest
 from errorlog import Category
 from symboltable import PrimitiveType
 from testhelpers import do_semantic_analysis, pretty_types
+import testcases_header as tc
 
-# ---- DAWG, WE NEEDA PUT THIS IN A SEPARATE HEADER FILE LMAO ----
-
-VALID_EXPRESSIONS = [
-    # Each entry is a pair: (expression source, expected type)
-    # Due to the way the inferred_types are stored, using ctx.getText() as the key,
-    # expressions must contain NO WHITE SPACE for the tests to work. E.g.,
-    # '59+a' is fine, '59 + a' won't work.
-
-
-    ('37', PrimitiveType.Int),
-    ('-37', PrimitiveType.Int),
-
-    # Brown tests
-    # Tests for strings
-    ('"hello"', PrimitiveType.String),
-    (r'"Hello\nWorld"', PrimitiveType.String),
-    (r'"Hello\rWorld"', PrimitiveType.String),
-    (r'"Hello\aWorld"', PrimitiveType.String),
-    (r'"Hello\bWorld"', PrimitiveType.String),
-    (r'"Hello\fWorld"', PrimitiveType.String),
-    (r'"Hello\tWorld"', PrimitiveType.String),
-    (r'"Hello\vWorld"', PrimitiveType.String),
-    (r'"Hello\\World"', PrimitiveType.String),
-    (r'"Hello\'World"', PrimitiveType.String),
-    (r'"Hello\?World"', PrimitiveType.String),
-    (r'"Hello            World"', PrimitiveType.String),
-    (r'"HELLO WORLD"', PrimitiveType.String),
-
-    # Tests for Bools
-    ('true', PrimitiveType.Bool),
-    ('false', PrimitiveType.Bool),
-
-    # Tests for Parens
-    ('("Hello World")', PrimitiveType.String),
-    ('(true)', PrimitiveType.Bool),
-    ('(false)', PrimitiveType.Bool),
-    ('(32*45)', PrimitiveType.Int),
-    ('(45+10)', PrimitiveType.Int),
-
-    # Tests for MulDiv
-    ('12*62', PrimitiveType.Int),
-    ('1*33', PrimitiveType.Int),
-    ('17*4', PrimitiveType.Int),
-
-    # ------------------ Velasco tests ------------------
-
-    # AddSub
-    ('23+49', PrimitiveType.Int),
-    ('16-0', PrimitiveType.Int),
-
-    # Boolean Negation
-    ('!true', PrimitiveType.Bool),
-    ('!!(!false)', PrimitiveType.Bool),
-
-    # Compare Binary Operator
-    ('(-23)<=48', PrimitiveType.Bool),
-    ('1==1', PrimitiveType.Bool),
-    ('(20+38)*56<92', PrimitiveType.Bool),
-
-
-
-
-
-]
-
-INVALID_EXPRESSIONS = [
-    # Each entry is a pair: (expression source, expected error category)
-    # As for VALID_EXPRESSIONS, there should be NO WHITE SPACE in the expressions.
-
-    ('!37', Category.INVALID_NEGATION),
-    ('!!37', Category.INVALID_NEGATION),
-
-    # Brown tests
-    # Can't make invalid tests for literals as it won't go into the method
-
-    # Tests for Parens
-    ('("string"*12)', Category.INVALID_BINARY_OP),
-    ('(!30)', Category.INVALID_BINARY_OP),
-    ('(33+true)', Category.INVALID_BINARY_OP),
-
-    # Tests for MulDiv
-    ('!!82*12', Category.INVALID_BINARY_OP),
-    ('"string"*12', Category.INVALID_BINARY_OP),
-
-    # ------------------ Velasco tests ------------------
-
-    # AddSub
-    ('"someString"+"nope"', Category.INVALID_BINARY_OP),
-    ('true+99', Category.INVALID_BINARY_OP),
-
-    # Boolean Negation (can't think of anymore for now)
-    ('!!!20', Category.INVALID_NEGATION),
-    ('!"Im a string"', Category.INVALID_NEGATION),
-
-    # Compare Binary Operator
-    ('false==true', Category.INVALID_NEGATION),
-    ('("Cant believe youve done this.")<30', Category.INVALID_NEGATION),
-
-]
-
-
-# Creating custom list of VarDec - by Velasco
-VALID_VARDEC = [
-
-
-    ('var myBool : Bool', 'myBool', PrimitiveType.Bool),
-    ('var myInt : Int', 'myInt', PrimitiveType.Int),
-    ('var myString : String', 'myString', PrimitiveType.String),
-    ('var myBool : Bool = true', 'myBool', PrimitiveType.Bool),
-    ('var myInt : Int = -100', 'myInt', PrimitiveType.Int),
-    ('var myString : String = "SomeString"', 'myString', PrimitiveType.String),
-    ('var myInt : Int = 100 / 12', 'myInt', PrimitiveType.Int),
-
-    # todo: ^ add some concatenated strings up there. And parens
-
-]
-
-INVALID_VARDEC = [
-
-    # Can only invalidate constraints.
-    ('var myBool : Bool = 100', 'myBool', Category.ASSIGN_TO_WRONG_TYPE),
-    ('var veryWrong : Int = "absolutely!"', 'veryWrong', Category.ASSIGN_TO_WRONG_TYPE),
-    ('var nooope : String = false', 'nooope', Category.ASSIGN_TO_WRONG_TYPE),
-    ('var duplicateThis : Bool = true\nvar duplicateThis : Int = 30', 'duplicateThis', Category.DUPLICATE_NAME),
-
-    # Including mismatched variable declaration here to acknowledge its existence.
-    # Leaving commented out though since its considered a real test case. Refer to Notes 1 for more info.
-    # ('var myBool : Bool = 100', 'wrongVar', Category.ASSIGN_TO_WRONG_TYPE),
-
-
-]
-
-VALID_VARIABLE = [
-
-    # Note: Try to think of other ways that we can use variables...
-
-    ('var x : Int\nprint x', 'x', PrimitiveType.Int),
-    ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'myBool', PrimitiveType.Bool),
-    ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'y', PrimitiveType.String),
-    ('var someVar : Bool = (30 == 40)\nprint someVar', 'someVar', PrimitiveType.Bool),
-
-
-]
-
-INVALID_VARIABLE = [
-
-    # Note: Try to think of other ways that we can use variables...
-
-    # Testing for this will be carried out a little differently - we want
-    # to find all the UNDEFINED_NAME errors that exist in the script,
-    # not just highlight ones specifically and completely ignore the rest.
-
-    'var varA : String = "varA String"\nprint varB',
-    'var anInt : String = 100 / "String"\nprint anInt',
-    'var newVar : String = "WasCompEngWorthIt?"\nprint newVar\nprint x',
-
-    # Leaving commented out a poorly designed test of invalid variables to acknowledge its existence -
-    # this one does not even have an undefined name error. It's literally in the wrong testing list.
-    # ('var someVar : String = 12', Category.UNDEFINED_NAME)
-
-]
-
-
-# Making a custom list of print statements to include print statements with variables.
-# Yeah turns out it needs to be put here since its root start rule is 'script', not 'expr'
-VALID_PRINT = [
-
-    # Will only be putting in non-variable print scripts. The ones with variables
-    # have already been tested in VALID_VARIABLE
-
-    ('print "ChocolateRain"', PrimitiveType.String),
-    ('print (1 + 3) * 12', PrimitiveType.Int),
-    ('print !(12 < -20)', PrimitiveType.Bool),
-
-]
-
-INVALID_PRINT = [
-
-    # Let's see if we can incur multiple errors into it
-    ('print "" == -false', [Category.INVALID_BINARY_OP, Category.INVALID_NEGATION, Category.UNPRINTABLE_EXPRESSION]),
-    ('print (1 + 3) * "Im an integer"', [Category.INVALID_BINARY_OP, Category.UNPRINTABLE_EXPRESSION]),
-    ('print (12 < !20)', [Category.INVALID_BINARY_OP, Category.INVALID_BINARY_OP,
-                          Category.INVALID_NEGATION, Category.UNPRINTABLE_EXPRESSION]),
-
-
-]
-
-VALID_ASSIGNMENT = [
-
-    ('var myInt : Int\nmyInt = -100', 'myInt', PrimitiveType.Int),
-    ('var myString : String\nmyString = "SomeString"', 'myString', PrimitiveType.String),
-    ('var myInt : Int\nmyInt = 100 / 12', 'myInt', PrimitiveType.Int),
-    ('var myBool : Bool\nmyBool = !true', 'myBool', PrimitiveType.Bool),
-    ('var myInt : Int\nvar myGuy : String\nmyInt = (10 - 20)', 'myInt', PrimitiveType.Int),
-    ('var setThrice : Int = 30\nsetThrice = 31\nsetThrice = 32', 'setThrice', PrimitiveType.Int),
-
-]
-
-INVALID_ASSIGNMENT = [
-
-    # Add more later
-
-    ('myInt = 12', Category.UNDEFINED_NAME),
-    ('var myString : String\nmyString = true', Category.ASSIGN_TO_WRONG_TYPE),
-    ('var myInt : Int\nvar myGuy : String\nmyPerson = (10 - 20)', Category.UNDEFINED_NAME),
-    ('var myVar : Int\nvar myVar : Bool\nmyVar = !true', Category.DUPLICATE_NAME),
-
-]
-
-WHILES = [
-    # Test takes two arguments, First is a while statement to test, second is True if errors exist.
-    ('while true { }', False),
-    ('while 10 == 10 { print 10 + 10 }', False),
-    ('while false { while 10 < 5 { print "string" } }', False),
-    ('while 10 + 10 {}', True),
-    ('while !10 == 5 {}', True),
-    ('while "string" {}', True),
-    ('while "str" + 10 { myInt = 12 }', True),
-]
 
 
 def print_debug_info(source, indexed_types, error_log):
@@ -290,7 +72,7 @@ class TypeTests(unittest.TestCase):
         that the expression's inferred type is as expected, and that there are no errors
         in the error_log.
         """
-        for expression, expected_type in VALID_EXPRESSIONS:
+        for expression, expected_type in tc.VALID_EXPRESSIONS:
 
             error_log, global_scope, indexed_types = do_semantic_analysis(expression, 'expr')
 
@@ -314,7 +96,7 @@ class TypeTests(unittest.TestCase):
         verifies that the expression is assigned the ERROR type and that there is a error_logged
         error of the expected category relating to the expression.
         """
-        for expression, expected_category in INVALID_EXPRESSIONS:
+        for expression, expected_category in tc.INVALID_EXPRESSIONS:
             error_log, global_scope, indexed_types = do_semantic_analysis(expression, 'expr')
             # if expression == '!!37':
             #     print_debug_info(expression, indexed_types, error_log)
@@ -337,7 +119,7 @@ class TypeTests(unittest.TestCase):
         print("\n\n", "-" * 30, " TESTING VALID VARDEC", "-" * 30, "\n");
 
         # Testing the valid ones
-        for var_declaration, variable, expected_type in VALID_VARDEC:
+        for var_declaration, variable, expected_type in tc.VALID_VARDEC:
 
             # Execute semantic analysis at script level
             error_log, global_scope, indexed_types = do_semantic_analysis(var_declaration, 'script');
@@ -361,7 +143,7 @@ class TypeTests(unittest.TestCase):
         print("\n\n", "-" * 30, " TESTING INVALID VARDEC", "-" * 30, "\n");
 
         # Testing the invalid varDecs
-        for var_declaration, variable, expected_category in INVALID_VARDEC:
+        for var_declaration, variable, expected_category in tc.INVALID_VARDEC:
 
             # Execute semantic analysis at script level
             error_log, global_scope, indexed_types = do_semantic_analysis(var_declaration, 'script');
@@ -401,7 +183,7 @@ class TypeTests(unittest.TestCase):
         print("\n\n", "-" * 30, " TESTING VALID VARIABLES", "-" * 30, "\n");
 
         # Testing the valid variables
-        for var_script, variable, expected_type in VALID_VARIABLE:
+        for var_script, variable, expected_type in tc.VALID_VARIABLE:
 
             # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
             error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
@@ -428,7 +210,7 @@ class TypeTests(unittest.TestCase):
         print("\n\n", "-" * 30, " TESTING INVALID VARIABLES", "-" * 30, "\n");
 
         # Testing the invalid variables
-        for var_script in INVALID_VARIABLE:
+        for var_script in tc.INVALID_VARIABLE:
 
             # Do semantic analysis
             error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
@@ -466,7 +248,7 @@ class TypeTests(unittest.TestCase):
         print("\n\n", "-" * 30, " TESTING VALID PRINT STATEMENTS", "-" * 30, "\n");
 
         # Testing the valid print statements
-        for print_script, expected_type in VALID_PRINT:
+        for print_script, expected_type in tc.VALID_PRINT:
 
             # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
             error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script');
@@ -481,7 +263,7 @@ class TypeTests(unittest.TestCase):
 
         # Testing the invalid print statements
         print("\n\n", "-" * 30, " TESTING INVALID PRINT STATEMENTS", "-" * 30, "\n");
-        for print_script, expected_category_list in INVALID_PRINT:
+        for print_script, expected_category_list in tc.INVALID_PRINT:
 
             # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
             error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script');
@@ -503,12 +285,13 @@ class TypeTests(unittest.TestCase):
             print('\t╰─ All errors that were found in script:\n\t\t\t'
                   + error_list);
 
+
     def test_assignment(self):
 
         # Testing valid print statements
         print("\n\n", "-" * 30, " TESTING VALID ASSIGNMENTS", "-" * 30, "\n");
 
-        for assignment_script, variable, expected_type in VALID_ASSIGNMENT:
+        for assignment_script, variable, expected_type in tc.VALID_ASSIGNMENT:
 
             # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
             error_log, global_scope, indexed_types = do_semantic_analysis(assignment_script, 'script');
@@ -536,7 +319,7 @@ class TypeTests(unittest.TestCase):
         print("\n\n", "-" * 30, " TESTING INVALID ASSIGNMENTS", "-" * 30, "\n");
 
         # Testing the invalid variables
-        for var_script, expected_category in INVALID_ASSIGNMENT:
+        for var_script, expected_category in tc.INVALID_ASSIGNMENT:
 
             # Do semantic analysis
             error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
@@ -566,12 +349,56 @@ class TypeTests(unittest.TestCase):
             print(f'\t╰─ All errors that were found in script - one may have caused {expected_category} error:\n\t\t\t'
                   + error_list);
 
+
     def test_while(self):
         # Testing for both valid and invalid while statements
-        for while_statement, has_errors in WHILES:
+        for while_statement, has_errors in tc.WHILES:
             error_log, global_scope, indexed_types = do_semantic_analysis(while_statement, "statement", False)
             if has_errors:
                 self.assertTrue(error_log.includes_on_line(Category.CONDITION_NOT_BOOL, 1))
                 self.assertNotEqual(0, error_log.total_entries())
             else:
                 self.assertEqual(0, error_log.total_entries())
+
+
+    def test_if(self):
+
+        # Testing valid if statements
+        print("\n\n", "-" * 30, " TESTING VALID IF STATEMENTS", "-" * 30, "\n");
+        for if_script in tc.VALID_IF:
+
+            # Perform semantic analysis
+            error_log, global_scope, indexed_types = do_semantic_analysis(if_script, 'script');
+
+            # Check if there were no errors in the script
+            self.assertEqual(0, error_log.total_entries());
+
+            # Debug statement
+            print("{" + if_script.replace("\n", "; ") + '} -> No errors found in ' +
+                  'found in script - passes the test.');
+
+
+        # Testing invalid if statements
+        print("\n\n", "-" * 30, " TESTING INVALID IF STATEMENTS", "-" * 30, "\n");
+        for if_script in tc.INVALID_IF:
+
+            # Perform semantic analysis
+            error_log, global_scope, indexed_types = do_semantic_analysis(if_script, 'script');
+
+            # Ensure an error had occurred
+            self.assertNotEqual(0, error_log.total_entries());
+
+            # Debug statement
+            print("\n{" + if_script.replace("\n", "; ") + '} -> Error were found in script - passes test');
+            error_list = "\n\t\t\t".join(error_log.__str__().splitlines());
+            print(f'\t╰─ All found errors:\n\t\t\t'
+                  + error_list);
+
+
+
+
+
+
+
+
+

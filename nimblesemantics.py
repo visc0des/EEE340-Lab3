@@ -177,7 +177,12 @@ class InferTypesAndCheckConstraints(NimbleListener):
 
 
     def exitIf(self, ctx: NimbleParser.IfContext):
-        pass
+
+        # Simply check if the expr child is of type boolean. If not, record error
+        if self.type_of[ctx.expr()] != PrimitiveType.Bool:
+            self.error_log.add(ctx, Category.CONDITION_NOT_BOOL, f"if-statement condition [{ctx.expr().getText()}] "
+                                                                 f"can only be of type {PrimitiveType.Bool}, not "
+                                                                 f"{self.type_of[ctx.expr()]}.");
 
     def exitPrint(self, ctx: NimbleParser.PrintContext):
 
@@ -262,14 +267,14 @@ class InferTypesAndCheckConstraints(NimbleListener):
         # Simply check if ID is an existing var, or non-error type var.
         # If not, set type of ctx to be ERROR.
         this_ID = ctx.ID().getText();
-        symbol_type = self.current_scope.resolve(this_ID);
+        symbol = self.current_scope.resolve(this_ID);
 
-        if symbol_type is None or symbol_type.type == PrimitiveType.ERROR:
+        if symbol is None or symbol.type == PrimitiveType.ERROR:
             self.type_of[ctx] = PrimitiveType.ERROR;
             self.error_log.add(ctx, Category.UNDEFINED_NAME,
                                f"Variable {this_ID} is undefined.");
         else:
-            self.type_of[ctx] = symbol_type;
+            self.type_of[ctx] = symbol.type;
 
 
     def exitStringLiteral(self, ctx: NimbleParser.StringLiteralContext):
