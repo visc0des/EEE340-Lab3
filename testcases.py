@@ -245,7 +245,7 @@ class TypeTests(unittest.TestCase):
         print("\n\n", "-" * 30, " TESTING VALID PRINT STATEMENTS", "-" * 30, "\n");
 
         # Testing the valid print statements
-        for print_script, expected_type in tc.VALID_PRINT:
+        for print_script in tc.VALID_PRINT:
 
             # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
             error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script');

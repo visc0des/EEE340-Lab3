@@ -182,9 +182,10 @@ VALID_PRINT = [
     # Will only be putting in non-variable print scripts. The ones with variables
     # have already been tested in VALID_VARIABLE
 
-    ('print "ChocolateRain"', PrimitiveType.String),
-    ('print (1 + 3) * 12', PrimitiveType.Int),
-    ('print !(12 < -20)', PrimitiveType.Bool),
+    'print "ChocolateRain"',
+    'print (1 + 3) * 12',
+    'print !(12 < -20)',
+    'var testVar : Int print testVar',
 
 ]
 
