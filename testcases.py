@@ -134,14 +134,14 @@ class TypeTests(unittest.TestCase):
         # Ensures the type returned was the expected type
         self.assertEqual(expected_type, symbol.type)
 
-    def big_valid_test(self, list):
+    def big_valid_test(self, test_list):
         """
         used as an expansion on the test conducted in basic_valid_test
         does a for loop through all values in list completing big_test,
         used in test_varDec, test_variable and, test_assignment
         no return
         """
-        for code_line, variable, expected_type in list:
+        for code_line, variable, expected_type in test_list:
             error_log, global_scope, indexed_types = self.basic_test(code_line)
             self.big_test(variable, expected_type, global_scope)
 
