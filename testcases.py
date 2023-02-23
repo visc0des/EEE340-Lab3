@@ -125,6 +125,7 @@ class TypeTests(unittest.TestCase):
         does a for loop through all values in list completing basic_valid_test,
         then ensure that the symbol being used was previously defined,
         then ensure the returned type is accurate
+        used in test_varDec, test_variable and, test_assignment
         no return
         """
         for code_line, variable, expected_type in list:
