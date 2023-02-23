@@ -8,10 +8,8 @@ analysis of valid and invalid expressions.
 **You will need to provide your own testing mechanisms for varDecs,
 statements and higher-level constructs as appropriate.**
 
-TODO: Complete test cases for Nimble semantic analysis, less function definitions and calls
-
 Group members: OCdt Liethan Velasco and OCdt Aaron Brown
-Version: TODO: Submission date here
+Version:    March 2nd, 2023
 
 
 Notes:
@@ -38,9 +36,12 @@ Notes:
     less to carry out any sort of test if the test case itself was not constructed correctly to enable proper testing.
 
 
-
     Instructor's version: 2023-02-08
+
 """
+
+# --- Importing Modules ---
+
 import sys
 import unittest
 
@@ -50,6 +51,7 @@ from testhelpers import do_semantic_analysis, pretty_types
 import testcases_header as tc
 
 
+# --- Declaring Utility Functions ---
 
 def print_debug_info(source, indexed_types, error_log):
     """
@@ -64,6 +66,8 @@ def print_debug_info(source, indexed_types, error_log):
         print(f'\n{error_log}')
 
 
+# --- Declaring the Unit Tests ---
+
 class TypeTests(unittest.TestCase):
 
     def test_valid_expressions(self):
@@ -72,22 +76,14 @@ class TypeTests(unittest.TestCase):
         that the expression's inferred type is as expected, and that there are no errors
         in the error_log.
         """
+
         for expression, expected_type in tc.VALID_EXPRESSIONS:
 
             error_log, global_scope, indexed_types = do_semantic_analysis(expression, 'expr')
 
-            """
-            # this is an example of how to use the print_debug_info function to understand errors
-            if expression == 'varmyBool:Bool':
-                print_debug_info(expression, indexed_types, error_log)
-            """
-
             with self.subTest(expression=expression, expected_type=expected_type):
                 self.assertEqual(expected_type, indexed_types[1][expression])
                 self.assertEqual(0, error_log.total_entries())
-
-        # Running tests for variables
-        # self.test_simple_var_dec();
 
 
     def test_invalid_expressions(self):
@@ -97,9 +93,9 @@ class TypeTests(unittest.TestCase):
         error of the expected category relating to the expression.
         """
         for expression, expected_category in tc.INVALID_EXPRESSIONS:
+
             error_log, global_scope, indexed_types = do_semantic_analysis(expression, 'expr')
-            # if expression == '!!37':
-            #     print_debug_info(expression, indexed_types, error_log)
+
             with self.subTest(expression=expression,
                               expected_category=expected_category):
                 self.assertEqual(PrimitiveType.ERROR, indexed_types[1][expression])
@@ -107,6 +103,7 @@ class TypeTests(unittest.TestCase):
                 # Changed to encapsulate invalid expressions with multiple errors in them.
                 # self.assertTrue(error_log.includes_exactly(expected_category, 1, expression))
                 self.assertNotEqual(0, error_log.total_entries());
+
 
     def test_varDec(self):
         """ Thanks for helping with this one sir :).
@@ -299,7 +296,7 @@ class TypeTests(unittest.TestCase):
             symbol = main_scope.resolve(variable);
 
             # Check if symbol is not NoneType. If it is, means passed
-            # in unit test variable was never declared.
+            # in unit test variable was never declared in script.
             if symbol is None:
                 raise Exception(f"ERROR - Passed in unit test variable <{variable}> not found in script. "
                                 f"Check for typo.");

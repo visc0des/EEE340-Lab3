@@ -1,13 +1,5 @@
 """
 
-TODO need to check if ID is used in multiple varDecs
-
-Group members: OCdt Liethan Velasco and OCdt Aaron Brown
-
-Version: TODO: completion date
-
-TODO: read this description, implement to make it true.
-
 The nimblesemantics module contains classes sufficient to perform a semantic analysis
 of Nimble programs.
 
@@ -38,12 +30,21 @@ phase or the second phase.
 In the second phase, type inference is performed and all other semantic constraints are
 checked.
 
+
+Group members: OCdt Liethan Velasco and OCdt Aaron Brown
+Version:    March 2nd, 2023
+
 """
+
+# --- Importing other Modules ---
 
 from errorlog import ErrorLog, Category
 from nimble import NimbleListener, NimbleParser
 from symboltable import PrimitiveType, Scope
 
+
+
+# --- Defining Classes that contain exit and enter functions ---
 
 class DefineScopesAndSymbols(NimbleListener):
 
@@ -77,37 +78,49 @@ class InferTypesAndCheckConstraints(NimbleListener):
         self.current_scope = global_scope
         self.type_of = types
 
+
     # --------------------------------------------------------
     # Program structure
     # --------------------------------------------------------
 
     def exitScript(self, ctx: NimbleParser.ScriptContext):
+        # Doesn't need any semantic analysis or constraint checking.
         pass
+
 
     def enterMain(self, ctx: NimbleParser.MainContext):
+
+        # Change current_scope field from $global -> $main
         self.current_scope = self.current_scope.child_scope_named('$main')
 
+
     def exitMain(self, ctx: NimbleParser.MainContext):
+
+        # Change current_scope field from $main -> $global
         self.current_scope = self.current_scope.enclosing_scope
 
+
     def exitBody(self, ctx: NimbleParser.BodyContext):
+        # Doesn't need any semantic analysis or constraint checking.
         pass
+
 
     def exitVarBlock(self, ctx: NimbleParser.VarBlockContext):
+        # Doesn't need any semantic analysis or constraint checking.
         pass
 
+
     def exitBlock(self, ctx: NimbleParser.BlockContext):
-        # TODO I don't think anything actually needs to be done here as it will never have an error
-        #  and doesn't need typed.
+        # I don't think anything actually needs to be done here as it will never have an error
+        # and doesn't need typed.
         pass
+
 
     # --------------------------------------------------------
     # Variable declarations
     # --------------------------------------------------------
 
     def exitVarDec(self, ctx: NimbleParser.VarDecContext):
-
-        # TODO - handle duplicated names
 
         # Creating mini-lookup dictionary for verification
         type_dict = {'Int': PrimitiveType.Int, 'Bool': PrimitiveType.Bool, 'String': PrimitiveType.String}
@@ -122,7 +135,7 @@ class InferTypesAndCheckConstraints(NimbleListener):
         if self.current_scope.resolve(this_ID) is not None:
             self.current_scope.define(this_ID, PrimitiveType.ERROR, False);
             self.error_log.add(ctx, Category.DUPLICATE_NAME, f"Previously declared variable already has name"
-                                                             f"{this_ID}. No duplicates are allowed.");
+                                                             f"[{this_ID}]. No duplicates are allowed.");
             return;
 
         # If no duplicate name, and if there was an assignment,
@@ -162,13 +175,13 @@ class InferTypesAndCheckConstraints(NimbleListener):
 
         # Checking if variable under ID has been declared. If not, record the error
         if symbol is None:
-            self.error_log.add(ctx, Category.UNDEFINED_NAME, f"Can't assign value to undefined variable {this_ID}");
+            self.error_log.add(ctx, Category.UNDEFINED_NAME, f"Can't assign value to undefined variable [{this_ID}]");
             return;
 
         # Otherwise, check if expr_type does not match variable type. If not, record the error
         if symbol.type != expr_type:
             self.error_log.add(ctx, Category.ASSIGN_TO_WRONG_TYPE, f"Can't assign value of type {expr_type} to variable"
-                                                                   f" {this_ID} of type {symbol.type}.");
+                                                                   f" [{this_ID}] of type {symbol.type}.");
 
 
     def exitWhile(self, ctx: NimbleParser.WhileContext):
@@ -183,6 +196,7 @@ class InferTypesAndCheckConstraints(NimbleListener):
             self.error_log.add(ctx, Category.CONDITION_NOT_BOOL, f"if-statement condition [{ctx.expr().getText()}] "
                                                                  f"can only be of type {PrimitiveType.Bool}, not "
                                                                  f"{self.type_of[ctx.expr()]}.");
+
 
     def exitPrint(self, ctx: NimbleParser.PrintContext):
 
@@ -214,14 +228,14 @@ class InferTypesAndCheckConstraints(NimbleListener):
         else:
             self.type_of[ctx] = PrimitiveType.ERROR
             self.error_log.add(ctx, Category.INVALID_NEGATION,
-                               f"Can't apply {ctx.op.text} to {self.type_of[ctx].name}")
+                               f"Can't apply {ctx.op.text} to [{self.type_of[ctx].name}]")
 
 
     def exitParens(self, ctx: NimbleParser.ParensContext):
         self.type_of[ctx] = self.type_of[ctx.expr()]
         if self.type_of[ctx.expr()] == PrimitiveType.ERROR:
-            # TODO idk if this is the right way to handle an error but can't find a better way rn
-            self.error_log.add(ctx, Category.INVALID_BINARY_OP, f"Error with expression")
+            self.error_log.add(ctx, Category.INVALID_BINARY_OP, f"Parentheses contain expression of "
+                                                                f"type {PrimitiveType.ERROR}.")
 
 
     def exitMulDiv(self, ctx: NimbleParser.MulDivContext):
@@ -232,7 +246,9 @@ class InferTypesAndCheckConstraints(NimbleListener):
         else:
             self.type_of[ctx] = PrimitiveType.ERROR
             self.error_log.add(ctx, Category.INVALID_BINARY_OP,
-                               f"Can't multiply or divide {self.type_of[ctx.expr(0)]} with {self.type_of[ctx.expr(1)]}")
+                               f"Can't multiply or divide {self.type_of[ctx.expr(0)]} "
+                               f"with/by {self.type_of[ctx.expr(1)]}")
+
 
     def exitAddSub(self, ctx: NimbleParser.AddSubContext):
 
@@ -272,13 +288,14 @@ class InferTypesAndCheckConstraints(NimbleListener):
         if symbol is None or symbol.type == PrimitiveType.ERROR:
             self.type_of[ctx] = PrimitiveType.ERROR;
             self.error_log.add(ctx, Category.UNDEFINED_NAME,
-                               f"Variable {this_ID} is undefined.");
+                               f"Variable [{this_ID}] is undefined.");
         else:
             self.type_of[ctx] = symbol.type;
 
 
     def exitStringLiteral(self, ctx: NimbleParser.StringLiteralContext):
         self.type_of[ctx] = PrimitiveType.String
+
 
     def exitBoolLiteral(self, ctx: NimbleParser.BoolLiteralContext):
         self.type_of[ctx] = PrimitiveType.Bool
