@@ -104,6 +104,20 @@ class TypeTests(unittest.TestCase):
                 # self.assertTrue(error_log.includes_exactly(expected_category, 1, expression))
                 self.assertNotEqual(0, error_log.total_entries());
 
+    def basic_valid_test(self, codeLine):
+        """
+        used as a basic test by test_varDec, test_variable, test_print and, test_assignment
+        will do semantic_analysis of the test and ensure that no errors where generated
+        returns error_log, global_scope, indexed_types
+        """
+        # runs the line of code through the antlr parser and will then do the
+        # walker pattern using the methods in nimblesemantics.py.
+        error_log, global_scope, indexed_types = do_semantic_analysis(codeLine, 'script');
+
+        # ensures that the no errors where generated
+        self.assertEqual(0, error_log.total_entries())
+
+        return error_log, global_scope, indexed_types
 
     def test_varDec(self):
         """ Thanks for helping with this one sir :).
@@ -246,10 +260,7 @@ class TypeTests(unittest.TestCase):
         for print_script in tc.VALID_PRINT:
 
             # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
-            error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script');
-
-            # Check if there were no errors in the script
-            self.assertEqual(0, error_log.total_entries());
+            error_log, global_scope, indexed_types = self.basic_valid_test(print_script)
 
             # Debug statement
             print("{" + print_script.replace("\n", "; ") + '} -> print script resulted in no errors' +
