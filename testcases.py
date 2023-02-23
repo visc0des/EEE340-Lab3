@@ -164,29 +164,18 @@ class TypeTests(unittest.TestCase):
         for var_declaration, variable, expected_category in tc.INVALID_VARDEC:
 
             # Execute semantic analysis at script level
-            error_log, global_scope, indexed_types = do_semantic_analysis(var_declaration, 'script');
+            error_log, global_scope, indexed_types = self.basic_test(var_declaration)
 
-            # Check to make sure at least 1 error is generated
-            self.assertNotEqual(0, error_log.total_entries());
+            self.big_test(variable, PrimitiveType.ERROR, global_scope)
 
-            # Get the main child scope from within the script scope
-            main_scope = global_scope.child_scope_named('$main');
-
-            # Check if passed in variable was not incorrect (nothing to test if it was incorrect)
-            symbol = main_scope.resolve(variable);
-            self.assertIsNotNone(symbol, 'passed in variable [' + variable + '] not defined. Check for typo.');
-
-            # Check if var_declaration gives variable type ERROR, and
-            # if we found the expected generated error in the error log
-            self.assertEqual(PrimitiveType.ERROR, symbol.type);
+            # Checks if the error's expected_category occurs
             script_lines = len(var_declaration.splitlines());
             found = 0;
             for i in range(1, script_lines + 1):
                 if error_log.includes_on_line(expected_category, i):
                     found = 1
                     break;
-            if found == 0:
-                raise Exception(f"ERROR - No {expected_category} category error found.");
+            self.assertEqual(0, found, f"ERROR - No {expected_category} category error found.")
 
             # Debug statement
             print('Invalid: ' + var_declaration + ' -> ' + variable + ' of type ' + str(PrimitiveType.ERROR) +
