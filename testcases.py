@@ -104,7 +104,7 @@ class TypeTests(unittest.TestCase):
                 # self.assertTrue(error_log.includes_exactly(expected_category, 1, expression))
                 self.assertNotEqual(0, error_log.total_entries());
 
-    def basic_valid_test(self, code_line):
+    def basic_test(self, code_line):
         """
         used as a basic test by test_varDec, test_variable, test_print and, test_assignment
         will do semantic_analysis of the test and ensure that no errors where generated
@@ -119,25 +119,31 @@ class TypeTests(unittest.TestCase):
 
         return error_log, global_scope, indexed_types
 
+    def big_test(self, variable, expected_type, global_scope):
+        """
+        will
+        then ensure that the symbol being used was previously defined,
+        then ensure the returned type is accurate
+        """
+
+        # Gets the main scope then checks if the variable exists
+        main_scope = global_scope.child_scope_named('$main')
+        symbol = main_scope.resolve(variable)
+        self.assertIsNotNone(symbol, f'passed in variable [{variable}] not defined. Check for typo.')
+
+        # Ensures the type returned was the expected type
+        self.assertEqual(expected_type, symbol.type)
+
     def big_valid_test(self, list):
         """
         used as an expansion on the test conducted in basic_valid_test
-        does a for loop through all values in list completing basic_valid_test,
-        then ensure that the symbol being used was previously defined,
-        then ensure the returned type is accurate
+        does a for loop through all values in list completing big_test,
         used in test_varDec, test_variable and, test_assignment
         no return
         """
         for code_line, variable, expected_type in list:
-            error_log, global_scope, indexed_types = self.basic_valid_test(code_line)
-
-            # Gets the main scope then checks if the variable exists
-            main_scope = global_scope.child_scope_named('$main')
-            symbol = main_scope.resolve(variable)
-            self.assertIsNotNone(symbol, f'passed in variable [{variable}] not defined. Check for typo.')
-
-            # Ensures the type returned was the expected type
-            self.assertEqual(expected_type, symbol.type)
+            error_log, global_scope, indexed_types = self.basic_test(code_line)
+            self.big_test(variable, expected_type, global_scope)
 
     def test_varDec(self):
         """ Thanks for helping with this one sir :).
@@ -240,7 +246,7 @@ class TypeTests(unittest.TestCase):
         for print_script in tc.VALID_PRINT:
 
             # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
-            self.basic_valid_test(print_script)
+            self.basic_test(print_script)
 
             # Debug statement
             print("{" + print_script.replace("\n", "; ") + '} -> print script resulted in no errors' +
