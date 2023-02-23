@@ -189,9 +189,7 @@ class TypeTests(unittest.TestCase):
 
             # Check if symbol is not NoneType. If it is, means passed
             # in unit test variable was never declared.
-            if symbol is None:
-                raise Exception(f"ERROR - Passed in unit test variable <{variable}> not found in script. "
-                                f"Check for typo.");
+            self.assertIsNotNone(symbol, f'passed in variable [{variable}] not defined. Check for typo.')
 
             # Check if there were no errors in the script
             self.assertEqual(0, error_log.total_entries());
