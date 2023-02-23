@@ -193,29 +193,8 @@ class TypeTests(unittest.TestCase):
 
         print("\n\n", "-" * 30, " TESTING VALID VARIABLES", "-" * 30, "\n");
 
+        self.big_valid_test(tc.VALID_VARIABLE)
         # Testing the valid variables
-        for var_script, variable, expected_type in tc.VALID_VARIABLE:
-
-            # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
-            error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
-            main_scope = global_scope.child_scope_named('$main');
-            symbol = main_scope.resolve(variable);
-
-            # Check if symbol is not NoneType. If it is, means passed
-            # in unit test variable was never declared.
-            self.assertIsNotNone(symbol, f'passed in variable [{variable}] not defined. Check for typo.')
-
-            # Check if there were no errors in the script
-            self.assertEqual(0, error_log.total_entries());
-
-            # Check if variable symbol is correct type in indexed_types
-            self.assertEqual(expected_type, symbol.type);
-
-            # Debug statement
-            print("{" + var_script.replace("\n", "; ") + '} -> ' + variable + ' of type ' + str(expected_type) +
-                  ' exists - passes the test.');
-
-
         print("\n\n", "-" * 30, " TESTING INVALID VARIABLES", "-" * 30, "\n");
 
         # Testing the invalid variables
@@ -296,29 +275,7 @@ class TypeTests(unittest.TestCase):
 
         # Testing valid print statements
         print("\n\n", "-" * 30, " TESTING VALID ASSIGNMENTS", "-" * 30, "\n");
-
-        for assignment_script, variable, expected_type in tc.VALID_ASSIGNMENT:
-
-            # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
-            error_log, global_scope, indexed_types = do_semantic_analysis(assignment_script, 'script');
-            main_scope = global_scope.child_scope_named('$main');
-            symbol = main_scope.resolve(variable);
-
-            # Check if symbol is not NoneType. If it is, means passed
-            # in unit test variable was never declared in script.
-            if symbol is None:
-                raise Exception(f"ERROR - Passed in unit test variable <{variable}> not found in script. "
-                                f"Check for typo.");
-
-            # Check if there were no errors in the script
-            self.assertEqual(0, error_log.total_entries());
-
-            # Check if variable symbol is correct type in indexed_types
-            self.assertEqual(expected_type, symbol.type);
-
-            # Debug statement
-            print("{" + assignment_script.replace("\n", "; ") + '} -> ' + variable + ' of type ' + str(expected_type) +
-                  ' successfully defined - passes the test.');
+        self.big_valid_test(tc.VALID_ASSIGNMENT)
 
 
         # Testing the invalid print statements
