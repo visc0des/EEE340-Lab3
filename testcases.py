@@ -147,7 +147,7 @@ class TypeTests(unittest.TestCase):
         # Ensures the type returned was the expected type
         self.assertEqual(expected_type, symbol.type)
 
-    def test_valid_list(self, test_list):
+    def valid_list_test(self, test_list):
         """
         Does a for loop through all values in list conducting check_symbol.
         Used in test_varDec, test_variable and, test_assignment.
@@ -164,7 +164,7 @@ class TypeTests(unittest.TestCase):
         """
         
         # Conducting valid varDec testing
-        self.test_valid_list(tc.VALID_VARDEC)
+        self.valid_list_test(tc.VALID_VARDEC)
 
         # Testing the invalid varDecs separately
         for var_declaration, variable, expected_category in tc.INVALID_VARDEC:
@@ -190,7 +190,7 @@ class TypeTests(unittest.TestCase):
         """
         
         # Conducting valid tests
-        self.test_valid_list(tc.VALID_VARIABLE)
+        self.valid_list_test(tc.VALID_VARIABLE)
 
         # Testing the invalid variables
         for var_script in tc.INVALID_VARIABLE:
@@ -242,7 +242,7 @@ class TypeTests(unittest.TestCase):
     def test_assignment(self):
 
         # Testing valid print statements
-        self.test_valid_list(tc.VALID_ASSIGNMENT)
+        self.valid_list_test(tc.VALID_ASSIGNMENT)
 
         # Testing the invalid variables
         for var_script, expected_category in tc.INVALID_ASSIGNMENT:
