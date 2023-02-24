@@ -85,7 +85,6 @@ class TypeTests(unittest.TestCase):
                 self.assertEqual(expected_type, indexed_types[1][expression])
                 self.assertEqual(0, error_log.total_entries())
 
-
     def test_invalid_expressions(self):
         """
         For each pair (expression source, expected error category) in INVALID_EXPRESSIONS,
@@ -141,7 +140,6 @@ class TypeTests(unittest.TestCase):
         then ensure that the symbol being used was previously defined,
         then ensure the returned type is accurate
         """
-
         # Gets the main scope then checks if the variable exists
         main_scope = global_scope.child_scope_named('$main')
         symbol = main_scope.resolve(variable)
@@ -163,10 +161,8 @@ class TypeTests(unittest.TestCase):
 
     def test_varDec(self):
         """ Thanks for helping with this one sir :).
-
         This function separately tests the varDec semantics. Since only expressions have types,
         and varDec's do not, a separate, special "script" scope has to constructed in order to test them.
-
         """
 
         print("\n\n", "-" * 30, " TESTING VALID VARDEC", "-" * 30, "\n");
@@ -197,12 +193,10 @@ class TypeTests(unittest.TestCase):
             print('Invalid: ' + var_declaration + ' -> ' + variable + ' of type ' + str(PrimitiveType.ERROR) +
                   ' with error ' + str(expected_category) + ' passes the test.');
 
-
     def test_variable(self):
         """
         Unit test that tests the semantic validity and invalidity of the created variable expressions.
         """
-
         print("\n\n", "-" * 30, " TESTING VALID VARIABLES", "-" * 30, "\n");
 
         self.big_valid_test(tc.VALID_VARIABLE)
@@ -235,12 +229,10 @@ class TypeTests(unittest.TestCase):
             print('\t╰─ All errors that were found in script - one may have caused UNDEFINED_NAME error:\n\t\t\t'
                   + error_list);
 
-
     def test_print(self):
         """
         Unit tests for semantic validity in regard to the print statement tests.
         """
-
         # Testing valid print statements
         print("\n\n", "-" * 30, " TESTING VALID PRINT STATEMENTS", "-" * 30, "\n");
 
@@ -279,9 +271,7 @@ class TypeTests(unittest.TestCase):
             print('\t╰─ All errors that were found in script:\n\t\t\t'
                   + error_list);
 
-
     def test_assignment(self):
-
         # Testing valid print statements
         print("\n\n", "-" * 30, " TESTING VALID ASSIGNMENTS", "-" * 30, "\n");
         self.big_valid_test(tc.VALID_ASSIGNMENT)
@@ -317,7 +307,6 @@ class TypeTests(unittest.TestCase):
             print(f'\t╰─ All errors that were found in script - one may have caused {expected_category} error:\n\t\t\t'
                   + error_list);
 
-
     def while_if_test(self, test_list, has_errors):
         # Testing for both valid and invalid while statements
         for statement in test_list:
@@ -335,7 +324,6 @@ class TypeTests(unittest.TestCase):
     def test_while(self):
         self.while_if_test(tc.VALID_WHILE, False)
         self.while_if_test(tc.INVALID_WHILE, True)
-
 
     def test_if(self):
         self.while_if_test(tc.VALID_IF, False)
