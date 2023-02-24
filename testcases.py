@@ -294,10 +294,7 @@ class TypeTests(unittest.TestCase):
         for var_script, expected_category in tc.INVALID_ASSIGNMENT:
 
             # Do semantic analysis
-            error_log, global_scope, indexed_types = do_semantic_analysis(var_script, 'script');
-
-            # Check to make sure at least 1 error is generated
-            self.assertNotEqual(0, error_log.total_entries());
+            error_log, global_scope, indexed_types = self.basic_invalid_test(var_script)
 
             # Look through error_log to see if expected error occured in the script.
             # If none found, then the invalid test case itself was invalid (ironic).
@@ -307,8 +304,7 @@ class TypeTests(unittest.TestCase):
                 if error_log.includes_on_line(expected_category, i):
                     found_line = i;
                     break;
-            if found_line == 0:
-                raise Exception(f"ERROR - No {expected_category} category error found.");
+            self.assertNotEqual(0, found_line, f"ERROR - No {expected_category} category error found.")
 
             # No point in checking if it has PrimitiveType.ERROR - if it has a Category.UNDEFINED_NAME
             # error in it, then yes, it's an error. It'd be redundant to do assert test its type.
