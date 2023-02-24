@@ -116,35 +116,35 @@ class InferTypesAndCheckConstraints(NimbleListener):
 
         # Extracting variable type declared, its primitive type,
         # and the ID declared
-        var_text = ctx.TYPE().getText();
-        var_primtype = type_dict[var_text];
-        this_ID = ctx.ID().getText();
+        var_text = ctx.TYPE().getText()
+        var_primtype = type_dict[var_text]
+        this_ID = ctx.ID().getText()
 
         # First thing to check is if we're declaring a duplicated variable name. Set ERROR if so and stop function.
         if self.current_scope.resolve(this_ID) is not None:
-            self.current_scope.define(this_ID, PrimitiveType.ERROR, False);
+            self.current_scope.define(this_ID, PrimitiveType.ERROR, False)
             self.error_log.add(ctx, Category.DUPLICATE_NAME, f"Previously declared variable already has name"
-                                                             f"[{this_ID}]. No duplicates are allowed.");
-            return;
+                                                             f"[{this_ID}]. No duplicates are allowed.")
+            return
 
         # If no duplicate name, and if there was an assignment,
         # check if does not violate type constraint
         if ctx.expr() is not None:
 
             # Extract value of expression put for assignment
-            expr_type = self.type_of[ctx.expr()];
+            expr_type = self.type_of[ctx.expr()]
 
             # Check if they match. If not, then there was a constraint violation
             if expr_type != var_primtype:
 
-                self.current_scope.define(this_ID, PrimitiveType.ERROR, False);
-                self.type_of[ctx] = PrimitiveType.ERROR;
+                self.current_scope.define(this_ID, PrimitiveType.ERROR, False)
+                self.type_of[ctx] = PrimitiveType.ERROR
                 self.error_log.add(ctx, Category.ASSIGN_TO_WRONG_TYPE,
-                                   f"Can't assign {str(expr_type)} to variable of type {var_text}");
-                return;
+                                   f"Can't assign {str(expr_type)} to variable of type {var_text}")
+                return
 
         # If all input conditions met, create the symbol with the inuptted typeset the variable type accordingly
-        self.current_scope.define(this_ID, var_primtype, False);
+        self.current_scope.define(this_ID, var_primtype, False)
 
     # --------------------------------------------------------
     # Statements
@@ -155,19 +155,19 @@ class InferTypesAndCheckConstraints(NimbleListener):
         # expr. If conditions are met, the variable symbol named ID takes on type of expr.
         # Otherwise, gets type ERROR
 
-        this_ID = ctx.ID().getText();
-        expr_type = self.type_of[ctx.expr()];
-        symbol = self.current_scope.resolve(this_ID);
+        this_ID = ctx.ID().getText()
+        expr_type = self.type_of[ctx.expr()]
+        symbol = self.current_scope.resolve(this_ID)
 
         # Checking if variable under ID has been declared. If not, record the error
         if symbol is None:
-            self.error_log.add(ctx, Category.UNDEFINED_NAME, f"Can't assign value to undefined variable [{this_ID}]");
-            return;
+            self.error_log.add(ctx, Category.UNDEFINED_NAME, f"Can't assign value to undefined variable [{this_ID}]")
+            return
 
         # Otherwise, check if expr_type does not match variable type. If not, record the error
         if symbol.type != expr_type:
             self.error_log.add(ctx, Category.ASSIGN_TO_WRONG_TYPE, f"Can't assign value of type {expr_type} to variable"
-                                                                   f" [{this_ID}] of type {symbol.type}.");
+                                                                   f" [{this_ID}] of type {symbol.type}.")
 
     def exitWhile(self, ctx: NimbleParser.WhileContext):
         if self.type_of[ctx.expr()] != PrimitiveType.Bool:
@@ -178,13 +178,13 @@ class InferTypesAndCheckConstraints(NimbleListener):
         if self.type_of[ctx.expr()] != PrimitiveType.Bool:
             self.error_log.add(ctx, Category.CONDITION_NOT_BOOL, f"if-statement condition [{ctx.expr().getText()}] "
                                                                  f"can only be of type {PrimitiveType.Bool}, not "
-                                                                 f"{self.type_of[ctx.expr()]}.");
+                                                                 f"{self.type_of[ctx.expr()]}.")
 
     def exitPrint(self, ctx: NimbleParser.PrintContext):
         # If expression to print is of type ERROR, record accordingly in error log.
         if self.type_of[ctx.expr()] == PrimitiveType.ERROR:
             self.error_log.add(ctx, Category.UNPRINTABLE_EXPRESSION, f"Can't print expression of type "
-                                                                     f"{PrimitiveType.ERROR}.");
+                                                                     f"{PrimitiveType.ERROR}.")
 
     # --------------------------------------------------------
     # Expressions
@@ -200,7 +200,7 @@ class InferTypesAndCheckConstraints(NimbleListener):
 
         # Are conditions met for a boolean negation?
         elif ctx.op.text == '!' and self.type_of[ctx.expr()] == PrimitiveType.Bool:
-            self.type_of[ctx] = PrimitiveType.Bool;
+            self.type_of[ctx] = PrimitiveType.Bool
 
         # If none, then error had occurred.
         else:
@@ -230,37 +230,37 @@ class InferTypesAndCheckConstraints(NimbleListener):
         if ((ctx.op.text == '+' or ctx.op.text == '-') and
             self.type_of[ctx.expr(0)] == PrimitiveType.Int and
                 self.type_of[ctx.expr(1)] == PrimitiveType.Int):
-            self.type_of[ctx] = PrimitiveType.Int;
+            self.type_of[ctx] = PrimitiveType.Int
 
         # Otherwise, set as error.
         else:
-            self.type_of[ctx] = PrimitiveType.ERROR;
+            self.type_of[ctx] = PrimitiveType.ERROR
             self.error_log.add(ctx, Category.INVALID_BINARY_OP,
-                               f"Can't apply {ctx.op.text} between non-integer type expression(s).");
+                               f"Can't apply {ctx.op.text} between non-integer type expression(s).")
 
     def exitCompare(self, ctx: NimbleParser.CompareContext):
         # Both left and right expressions must be integers. Results in a boolean type.
         # If these conditions are not met, error had occurred.
-        left = self.type_of[ctx.expr(0)];
-        right = self.type_of[ctx.expr(1)];
+        left = self.type_of[ctx.expr(0)]
+        right = self.type_of[ctx.expr(1)]
         if left == PrimitiveType.Int and right == PrimitiveType.Int:
-            self.type_of[ctx] = PrimitiveType.Bool;
+            self.type_of[ctx] = PrimitiveType.Bool
         else:
-            self.type_of[ctx] = PrimitiveType.ERROR;
-            self.error_log.add(ctx, Category.INVALID_BINARY_OP, f"Can't compare two non-integer type expressions.");
+            self.type_of[ctx] = PrimitiveType.ERROR
+            self.error_log.add(ctx, Category.INVALID_BINARY_OP, f"Can't compare two non-integer type expressions.")
 
     def exitVariable(self, ctx: NimbleParser.VariableContext):
         # Simply check if ID is an existing var, or non-error type var.
         # If not, set type of ctx to be ERROR.
-        this_ID = ctx.ID().getText();
-        symbol = self.current_scope.resolve(this_ID);
+        this_ID = ctx.ID().getText()
+        symbol = self.current_scope.resolve(this_ID)
 
         if symbol is None or symbol.type == PrimitiveType.ERROR:
-            self.type_of[ctx] = PrimitiveType.ERROR;
+            self.type_of[ctx] = PrimitiveType.ERROR
             self.error_log.add(ctx, Category.UNDEFINED_NAME,
-                               f"Variable [{this_ID}] is undefined.");
+                               f"Variable [{this_ID}] is undefined.")
         else:
-            self.type_of[ctx] = symbol.type;
+            self.type_of[ctx] = symbol.type
 
     def exitStringLiteral(self, ctx: NimbleParser.StringLiteralContext):
         self.type_of[ctx] = PrimitiveType.String

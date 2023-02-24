@@ -101,7 +101,7 @@ class TypeTests(unittest.TestCase):
 
                 # Changed to encapsulate invalid expressions with multiple errors in them.
                 # self.assertTrue(error_log.includes_exactly(expected_category, 1, expression))
-                self.assertNotEqual(0, error_log.total_entries());
+                self.assertNotEqual(0, error_log.total_entries())
 
     def basic_valid_test(self, code_line):
         """
@@ -111,7 +111,7 @@ class TypeTests(unittest.TestCase):
         """
         # runs the line of code through the antlr parser and will then do the
         # walker pattern using the methods in nimblesemantics.py.
-        error_log, global_scope, indexed_types = do_semantic_analysis(code_line, 'script');
+        error_log, global_scope, indexed_types = do_semantic_analysis(code_line, 'script')
 
         # ensures that the no errors where generated
         self.assertEqual(0, error_log.total_entries())
@@ -127,7 +127,7 @@ class TypeTests(unittest.TestCase):
         """
         # runs the line of code through the antlr parser and will then do the
         # walker pattern using the methods in nimblesemantics.py.
-        error_log, global_scope, indexed_types = do_semantic_analysis(code_line, 'script');
+        error_log, global_scope, indexed_types = do_semantic_analysis(code_line, 'script')
 
         # ensures that the no errors where generated
         self.assertNotEqual(0, error_log.total_entries())
@@ -165,12 +165,12 @@ class TypeTests(unittest.TestCase):
         and varDec's do not, a separate, special "script" scope has to constructed in order to test them.
         """
 
-        print("\n\n", "-" * 30, " TESTING VALID VARDEC", "-" * 30, "\n");
+        print("\n\n", "-" * 30, " TESTING VALID VARDEC", "-" * 30, "\n")
 
         # Testing the valid ones
         self.big_valid_test(tc.VALID_VARDEC)
 
-        print("\n\n", "-" * 30, " TESTING INVALID VARDEC", "-" * 30, "\n");
+        print("\n\n", "-" * 30, " TESTING INVALID VARDEC", "-" * 30, "\n")
 
         # Testing the invalid varDecs
         for var_declaration, variable, expected_category in tc.INVALID_VARDEC:
@@ -181,27 +181,27 @@ class TypeTests(unittest.TestCase):
             self.big_test(variable, PrimitiveType.ERROR, global_scope)
 
             # Checks if the error's expected_category occurs
-            script_lines = len(var_declaration.splitlines());
-            found = 0;
+            script_lines = len(var_declaration.splitlines())
+            found = 0
             for i in range(1, script_lines + 1):
                 if error_log.includes_on_line(expected_category, i):
                     found = 1
-                    break;
+                    break
             self.assertNotEqual(0, found, f"ERROR - No {expected_category} category error found.")
 
             # Debug statement
             print('Invalid: ' + var_declaration + ' -> ' + variable + ' of type ' + str(PrimitiveType.ERROR) +
-                  ' with error ' + str(expected_category) + ' passes the test.');
+                  ' with error ' + str(expected_category) + ' passes the test.')
 
     def test_variable(self):
         """
         Unit test that tests the semantic validity and invalidity of the created variable expressions.
         """
-        print("\n\n", "-" * 30, " TESTING VALID VARIABLES", "-" * 30, "\n");
+        print("\n\n", "-" * 30, " TESTING VALID VARIABLES", "-" * 30, "\n")
 
         self.big_valid_test(tc.VALID_VARIABLE)
         # Testing the valid variables
-        print("\n\n", "-" * 30, " TESTING INVALID VARIABLES", "-" * 30, "\n");
+        print("\n\n", "-" * 30, " TESTING INVALID VARIABLES", "-" * 30, "\n")
 
         # Testing the invalid variables
         for var_script in tc.INVALID_VARIABLE:
@@ -211,30 +211,30 @@ class TypeTests(unittest.TestCase):
 
             # Finding which line the UNDEFINED_NAME category error exists.
             # If none found, then the invalid test case itself was invalid (ironic).
-            found_line = 0;
+            found_line = 0
             for i in range(1, len(indexed_types) + 1):
                 if error_log.includes_on_line(Category.UNDEFINED_NAME, i):
-                    found_line = i;
-                    break;
+                    found_line = i
+                    break
             if found_line == 0:
-                raise Exception("ERROR - No UNDEFINED_NAME category error found.");
+                raise Exception("ERROR - No UNDEFINED_NAME category error found.")
 
             # No point in checking if it has PrimitiveType.ERROR - if it has a Category.UNDEFINED_NAME
             # error in it, then yes, it's an error. It'd be redundant to do assert test its type.
 
             # Debug statement (also print any other errors which may have been cause of UNDEFINED_NAME error)
             print("\n{" + var_script.replace("\n", "; ") + '} -> One or more ' + str(PrimitiveType.ERROR) +
-                  ':' + str(Category.UNDEFINED_NAME) + '(s) found in the script - passes the test.');
-            error_list = "\n\t\t\t".join(error_log.__str__().splitlines());
+                  ':' + str(Category.UNDEFINED_NAME) + '(s) found in the script - passes the test.')
+            error_list = "\n\t\t\t".join(error_log.__str__().splitlines())
             print('\t╰─ All errors that were found in script - one may have caused UNDEFINED_NAME error:\n\t\t\t'
-                  + error_list);
+                  + error_list)
 
     def test_print(self):
         """
         Unit tests for semantic validity in regard to the print statement tests.
         """
         # Testing valid print statements
-        print("\n\n", "-" * 30, " TESTING VALID PRINT STATEMENTS", "-" * 30, "\n");
+        print("\n\n", "-" * 30, " TESTING VALID PRINT STATEMENTS", "-" * 30, "\n")
 
         # Testing the valid print statements
         for print_script in tc.VALID_PRINT:
@@ -244,41 +244,41 @@ class TypeTests(unittest.TestCase):
 
             # Debug statement
             print("{" + print_script.replace("\n", "; ") + '} -> print script resulted in no errors' +
-                  ' - passes the test.');
+                  ' - passes the test.')
 
 
         # Testing the invalid print statements
-        print("\n\n", "-" * 30, " TESTING INVALID PRINT STATEMENTS", "-" * 30, "\n");
+        print("\n\n", "-" * 30, " TESTING INVALID PRINT STATEMENTS", "-" * 30, "\n")
         for print_script, expected_category_list in tc.INVALID_PRINT:
 
             # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
-            error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script');
+            error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script')
 
             # Check if errors caught were exactly as many errors in expected_category_list
             if len(expected_category_list) != error_log.total_entries():
                 raise Exception(f"ERROR - Number of detected errors in script does "
-                                f"not match number of errors expected.");
+                                f"not match number of errors expected.")
 
             # Checking in error_log if we have all the expected errors in the print_script
             for this_cat in expected_category_list:
                 if not error_log.includes_on_line(this_cat, 1):
-                    raise Exception(f"ERROR - Category error of {this_cat} not in script.");
+                    raise Exception(f"ERROR - Category error of {this_cat} not in script.")
 
             # Debug statement
             print("\n{" + print_script.replace("\n", "; ") + '} -> category errors '
-                  + str(expected_category_list) + ' found in script - passes the test.');
-            error_list = "\n\t\t\t".join(error_log.__str__().splitlines());
+                  + str(expected_category_list) + ' found in script - passes the test.')
+            error_list = "\n\t\t\t".join(error_log.__str__().splitlines())
             print('\t╰─ All errors that were found in script:\n\t\t\t'
-                  + error_list);
+                  + error_list)
 
     def test_assignment(self):
         # Testing valid print statements
-        print("\n\n", "-" * 30, " TESTING VALID ASSIGNMENTS", "-" * 30, "\n");
+        print("\n\n", "-" * 30, " TESTING VALID ASSIGNMENTS", "-" * 30, "\n")
         self.big_valid_test(tc.VALID_ASSIGNMENT)
 
 
         # Testing the invalid print statements
-        print("\n\n", "-" * 30, " TESTING INVALID ASSIGNMENTS", "-" * 30, "\n");
+        print("\n\n", "-" * 30, " TESTING INVALID ASSIGNMENTS", "-" * 30, "\n")
 
         # Testing the invalid variables
         for var_script, expected_category in tc.INVALID_ASSIGNMENT:
@@ -288,12 +288,12 @@ class TypeTests(unittest.TestCase):
 
             # Look through error_log to see if expected error occured in the script.
             # If none found, then the invalid test case itself was invalid (ironic).
-            found_line = 0;
-            script_lines = len(var_script.splitlines());
+            found_line = 0
+            script_lines = len(var_script.splitlines())
             for i in range(1, script_lines + 1):
                 if error_log.includes_on_line(expected_category, i):
-                    found_line = i;
-                    break;
+                    found_line = i
+                    break
             self.assertNotEqual(0, found_line, f"ERROR - No {expected_category} category error found.")
 
             # No point in checking if it has PrimitiveType.ERROR - if it has a Category.UNDEFINED_NAME
@@ -302,10 +302,10 @@ class TypeTests(unittest.TestCase):
             # Debug statement (also print any other errors which may have been cause of UNDEFINED_NAME error)
             print("\n{" + var_script.replace("\n", "; ") + '} -> Error ' + str(PrimitiveType.ERROR) +
                   ':' + str(expected_category) + f'(s) found in script @ line {found_line} - '
-                                                       f'passes the test.');
-            error_list = "\n\t\t\t".join(error_log.__str__().splitlines());
+                                                       f'passes the test.')
+            error_list = "\n\t\t\t".join(error_log.__str__().splitlines())
             print(f'\t╰─ All errors that were found in script - one may have caused {expected_category} error:\n\t\t\t'
-                  + error_list);
+                  + error_list)
 
     def while_if_test(self, test_list, has_errors):
         # Testing for both valid and invalid while statements
