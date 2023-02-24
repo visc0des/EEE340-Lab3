@@ -219,6 +219,7 @@ INVALID_ASSIGNMENT = [
     ('var myString : String\nmyString = true', Category.ASSIGN_TO_WRONG_TYPE),
     ('var myInt : Int\nvar myGuy : String\nmyPerson = (10 - 20)', Category.UNDEFINED_NAME),
     ('var myVar : Int\nvar myVar : Bool\nmyVar = !true', Category.DUPLICATE_NAME),
+    ('var x : Bool = true\n var y : Int = 10\n print x * y', Category.UNPRINTABLE_EXPRESSION),
 
 ]
 
