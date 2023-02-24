@@ -318,55 +318,25 @@ class TypeTests(unittest.TestCase):
                   + error_list);
 
 
-    def test_while(self):
+    def while_if_test(self, test_list, has_errors):
         # Testing for both valid and invalid while statements
-        for while_statement, has_errors in tc.WHILES:
-            error_log, global_scope, indexed_types = do_semantic_analysis(while_statement, "statement", False)
+        for statement in test_list:
+            error_log, global_scope, indexed_types = do_semantic_analysis(statement, "script", False)
             if has_errors:
-                self.assertTrue(error_log.includes_on_line(Category.CONDITION_NOT_BOOL, 1))
+                found = False
+                for i in range(1, len(statement.splitlines()) + 1):
+                    if error_log.includes_on_line(Category.CONDITION_NOT_BOOL, i):
+                        found = True
+                self.assertTrue(found)
                 self.assertNotEqual(0, error_log.total_entries())
             else:
                 self.assertEqual(0, error_log.total_entries())
 
+    def test_while(self):
+        self.while_if_test(tc.VALID_WHILE, False)
+        self.while_if_test(tc.INVALID_WHILE, True)
+
 
     def test_if(self):
-
-        # Testing valid if statements
-        print("\n\n", "-" * 30, " TESTING VALID IF STATEMENTS", "-" * 30, "\n");
-        for if_script in tc.VALID_IF:
-
-            # Perform semantic analysis
-            error_log, global_scope, indexed_types = do_semantic_analysis(if_script, 'script');
-
-            # Check if there were no errors in the script
-            self.assertEqual(0, error_log.total_entries());
-
-            # Debug statement
-            print("{" + if_script.replace("\n", "; ") + '} -> No errors found in ' +
-                  'found in script - passes the test.');
-
-
-        # Testing invalid if statements
-        print("\n\n", "-" * 30, " TESTING INVALID IF STATEMENTS", "-" * 30, "\n");
-        for if_script in tc.INVALID_IF:
-
-            # Perform semantic analysis
-            error_log, global_scope, indexed_types = do_semantic_analysis(if_script, 'script');
-
-            # Ensure an error had occurred
-            self.assertNotEqual(0, error_log.total_entries());
-
-            # Debug statement
-            print("\n{" + if_script.replace("\n", "; ") + '} -> Error were found in script - passes test');
-            error_list = "\n\t\t\t".join(error_log.__str__().splitlines());
-            print(f'\t╰─ All found errors:\n\t\t\t'
-                  + error_list);
-
-
-
-
-
-
-
-
-
+        self.while_if_test(tc.VALID_IF, False)
+        self.while_if_test(tc.INVALID_IF, True)
