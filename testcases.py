@@ -103,11 +103,11 @@ class TypeTests(unittest.TestCase):
                 # self.assertTrue(error_log.includes_exactly(expected_category, 1, expression))
                 self.assertNotEqual(0, error_log.total_entries())
 
-    def basic_valid_test(self, code_line):
+    def get_valid_testItems(self, code_line):
         """
-        used as a basic test by test_varDec, test_variable, test_print and, test_assignment
-        will do semantic_analysis of the test and ensure that no errors where generated
-        returns error_log, global_scope, indexed_types
+        Used as a first test by test_varDec, test_variable, test_print and, test_assignment
+        will do semantic_analysis of the test and ensure that no errors were generated
+        Returns error_log, global_scope, indexed_types.
         """
         # runs the line of code through the antlr parser and will then do the
         # walker pattern using the methods in nimblesemantics.py.
@@ -118,12 +118,12 @@ class TypeTests(unittest.TestCase):
 
         return error_log, global_scope, indexed_types
 
-    def basic_invalid_test(self, code_line):
+    def get_invalid_testItems(self, code_line):
         """
-        same as basic_valid_test but ensure that an error has occured
-        used as a basic test by test_varDec, test_variable, test_print and, test_assignment
-        will do semantic_analysis of the test and ensure that no errors where generated
-        returns error_log, global_scope, indexed_types
+        Same as get_valid_testItems but ensure that an error has occured
+        used as a basic test by test_varDec, test_variable, test_print and, test_assignment.
+        Will do semantic_analysis of the test and ensure that no errors where generated.
+        Returns error_log, global_scope, indexed_types
         """
         # runs the line of code through the antlr parser and will then do the
         # walker pattern using the methods in nimblesemantics.py.
@@ -134,10 +134,9 @@ class TypeTests(unittest.TestCase):
 
         return error_log, global_scope, indexed_types
 
-    def big_test(self, variable, expected_type, global_scope):
+    def check_symbol(self, variable, expected_type, global_scope):
         """
-        will
-        then ensure that the symbol being used was previously defined,
+        Will then ensure that the symbol being used was previously defined,
         then ensure the returned type is accurate
         """
         # Gets the main scope then checks if the variable exists
@@ -148,34 +147,35 @@ class TypeTests(unittest.TestCase):
         # Ensures the type returned was the expected type
         self.assertEqual(expected_type, symbol.type)
 
-    def big_valid_test(self, test_list):
+    def test_valid_list(self, test_list):
         """
-        used as an expansion on the test conducted in basic_valid_test
-        does a for loop through all values in list completing big_test,
-        used in test_varDec, test_variable and, test_assignment
-        no return
+        Does a for loop through all values in list conducting check_symbol.
+        Used in test_varDec, test_variable and, test_assignment.
+        No return.
         """
         for code_line, variable, expected_type in test_list:
-            error_log, global_scope, indexed_types = self.basic_valid_test(code_line)
-            self.big_test(variable, expected_type, global_scope)
+            error_log, global_scope, indexed_types = self.get_valid_testItems(code_line)
+            self.check_symbol(variable, expected_type, global_scope)
 
     def test_varDec(self):
         """ Thanks for helping with this one sir :).
         This function separately tests the varDec semantics. Since only expressions have types,
         and varDec's do not, a separate, special "script" scope has to constructed in order to test them.
         """
-        # Testing the valid ones
-        self.big_valid_test(tc.VALID_VARDEC)
+        
+        # Conducting valid varDec testing
+        self.test_valid_list(tc.VALID_VARDEC)
 
-        # Testing the invalid varDecs
+        # Testing the invalid varDecs separately
         for var_declaration, variable, expected_category in tc.INVALID_VARDEC:
 
             # Execute semantic analysis at script level
-            error_log, global_scope, indexed_types = self.basic_invalid_test(var_declaration)
+            error_log, global_scope, indexed_types = self.get_invalid_testItems(var_declaration)
 
-            self.big_test(variable, PrimitiveType.ERROR, global_scope)
+            # Test if variable has type ERROR
+            self.check_symbol(variable, PrimitiveType.ERROR, global_scope)
 
-            # Checks if the error's expected_category occurs
+            # Checks if the expected_category's error occurs
             script_lines = len(var_declaration.splitlines())
             found = 0
             for i in range(1, script_lines + 1):
@@ -186,16 +186,17 @@ class TypeTests(unittest.TestCase):
 
     def test_variable(self):
         """
-        Unit test that tests the semantic validity and invalidity of the created variable expressions.
+        Unit test which tests the semantic validity and invalidity of the created variable expressions.
         """
-        # Valid test
-        self.big_valid_test(tc.VALID_VARIABLE)
+        
+        # Conducting valid tests
+        self.test_valid_list(tc.VALID_VARIABLE)
 
         # Testing the invalid variables
         for var_script in tc.INVALID_VARIABLE:
 
             # Do semantic analysis
-            error_log, global_scope, indexed_types = self.basic_invalid_test(var_script)
+            error_log, global_scope, indexed_types = self.get_invalid_testItems(var_script)
 
             # Finding which line the UNDEFINED_NAME category error exists.
             # If none found, then the invalid test case itself was invalid (ironic).
@@ -208,22 +209,24 @@ class TypeTests(unittest.TestCase):
                 raise Exception("ERROR - No UNDEFINED_NAME category error found.")
 
             # No point in checking if it has PrimitiveType.ERROR - if it has a Category.UNDEFINED_NAME
-            # error in it, then yes, it's an error. It'd be redundant to do assert test its type.
+            # error in it, then yes, it's an error. It's redundant to do assert test its type.
 
     def test_print(self):
         """
-        Unit tests for semantic validity in regard to the print statement tests.
+        Unit tests for semantic validity in regard to the non-variable print statements.
         """
+
         # Testing the valid print statements
         for print_script in tc.VALID_PRINT:
 
-            # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
-            self.basic_valid_test(print_script)
+            # Do semantic analysis,  and check for no errors.
+            # todo. this doesn't happen --> and get the SYMBOL of unit test variable through resolve (if it exists)
+            self.get_valid_testItems(print_script)
 
         # Testing the invalid print statements
         for print_script, expected_category_list in tc.INVALID_PRINT:
 
-            # Do semantic analysis, and get the SYMBOL of unit test variable through resolve (if it exists)
+            # Do semantic analysis, get the testing items
             error_log, global_scope, indexed_types = do_semantic_analysis(print_script, 'script')
 
             # Check if errors caught were exactly as many errors in expected_category_list
@@ -237,14 +240,15 @@ class TypeTests(unittest.TestCase):
                     raise Exception(f"ERROR - Category error of {this_cat} not in script.")
 
     def test_assignment(self):
+
         # Testing valid print statements
-        self.big_valid_test(tc.VALID_ASSIGNMENT)
+        self.test_valid_list(tc.VALID_ASSIGNMENT)
 
         # Testing the invalid variables
         for var_script, expected_category in tc.INVALID_ASSIGNMENT:
 
             # Do semantic analysis
-            error_log, global_scope, indexed_types = self.basic_invalid_test(var_script)
+            error_log, global_scope, indexed_types = self.get_invalid_testItems(var_script)
 
             # Look through error_log to see if expected error occured in the script.
             # If none found, then the invalid test case itself was invalid (ironic).
@@ -257,10 +261,12 @@ class TypeTests(unittest.TestCase):
             self.assertNotEqual(0, found_line, f"ERROR - No {expected_category} category error found.")
 
             # No point in checking if it has PrimitiveType.ERROR - if it has a Category.UNDEFINED_NAME
-            # error in it, then yes, it's an error. It'd be redundant to do assert test its type.
+            # error in it, then yes, it's an error. It's redundant to assert test its type.
 
     def while_if_test(self, test_list, has_errors):
-        # Testing for both valid and invalid while statements
+        """
+            Function for testing both valid and invalid while and if statements.
+        """
         for statement in test_list:
             error_log, global_scope, indexed_types = do_semantic_analysis(statement, "script", False)
             if has_errors:
@@ -274,9 +280,11 @@ class TypeTests(unittest.TestCase):
                 self.assertEqual(0, error_log.total_entries())
 
     def test_while(self):
+        """ Wrapper function of while test cases. """
         self.while_if_test(tc.VALID_WHILE, False)
         self.while_if_test(tc.INVALID_WHILE, True)
 
     def test_if(self):
+        """ Wrapper function of if test cases. """
         self.while_if_test(tc.VALID_IF, False)
         self.while_if_test(tc.INVALID_IF, True)

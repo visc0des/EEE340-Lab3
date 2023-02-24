@@ -191,7 +191,7 @@ VALID_PRINT = [
 
 INVALID_PRINT = [
 
-    # Let's see if we can incur multiple errors into it
+    # Print statements with variables already tested in VARIABLE tests
     ('print "" == -false', [Category.INVALID_BINARY_OP, Category.INVALID_NEGATION, Category.UNPRINTABLE_EXPRESSION]),
     ('print (1 + 3) * "Im an integer"', [Category.INVALID_BINARY_OP, Category.UNPRINTABLE_EXPRESSION]),
     ('print (12 < !20)', [Category.INVALID_BINARY_OP, Category.INVALID_BINARY_OP,
