@@ -95,6 +95,7 @@ INVALID_EXPRESSIONS = [
     # Tests for MulDiv
     ('!!82*12', Category.INVALID_BINARY_OP),
     ('"string"*12', Category.INVALID_BINARY_OP),
+    ('a/b', Category.INVALID_BINARY_OP),
 
     # ------------------ Velasco tests ------------------
 
