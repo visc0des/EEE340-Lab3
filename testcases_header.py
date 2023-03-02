@@ -149,8 +149,6 @@ INVALID_VARDEC = [
 
 VALID_VARIABLE = [
 
-    # Note: Try to think of other ways that we can use variables...
-
     ('var x : Int\nprint x', 'x', PrimitiveType.Int),
     ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'myBool', PrimitiveType.Bool),
     ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'y', PrimitiveType.String),
@@ -160,8 +158,6 @@ VALID_VARIABLE = [
 ]
 
 INVALID_VARIABLE = [
-
-    # Note: Try to think of other ways that we can use variables...
 
     # Testing for this will be carried out a little differently - we want
     # to find all the UNDEFINED_NAME errors that exist in the script,
@@ -182,7 +178,6 @@ INVALID_VARIABLE = [
 
 
 # Making a custom list of print statements to include print statements with variables.
-# Yeah turns out it needs to be put here since its root start rule is 'script', not 'expr'
 VALID_PRINT = [
 
     # Will only be putting in non-variable print scripts. The ones with variables
