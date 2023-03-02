@@ -21,7 +21,7 @@ VALID_EXPRESSIONS = [
     # '59+a' is fine, '59 + a' won't work.
 
     # Note here to acknowledge that there is no point testing integer
-    # or boolean literals.
+    # or boolean literals as any errors will be detected by the parser.
 
     ('37', PrimitiveType.Int),
     ('-37', PrimitiveType.Int),
