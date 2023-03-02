@@ -99,9 +99,8 @@ class TypeTests(unittest.TestCase):
                               expected_category=expected_category):
                 self.assertEqual(PrimitiveType.ERROR, indexed_types[1][expression])
 
-                # Changed to encapsulate invalid expressions with multiple errors in them.
-                # self.assertTrue(error_log.includes_exactly(expected_category, 1, expression))
-                self.assertNotEqual(0, error_log.total_entries())
+                self.assertTrue(error_log.includes_exactly(expected_category, 1, expression))
+
 
     def get_valid_testItems(self, code_line):
         """
@@ -220,7 +219,6 @@ class TypeTests(unittest.TestCase):
         for print_script in tc.VALID_PRINT:
 
             # Do semantic analysis,  and check for no errors.
-            # todo. this doesn't happen --> and get the SYMBOL of unit test variable through resolve (if it exists)
             self.get_valid_testItems(print_script)
 
         # Testing the invalid print statements

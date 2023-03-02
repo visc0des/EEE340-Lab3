@@ -20,6 +20,8 @@ VALID_EXPRESSIONS = [
     # expressions must contain NO WHITE SPACE for the tests to work. E.g.,
     # '59+a' is fine, '59 + a' won't work.
 
+    # Note here to acknowledge that there is no point testing integer
+    # or boolean literals.
 
     ('37', PrimitiveType.Int),
     ('-37', PrimitiveType.Int),
@@ -48,41 +50,41 @@ VALID_EXPRESSIONS = [
     ('("Hello World")', PrimitiveType.String),
     ('(true)', PrimitiveType.Bool),
     ('(false)', PrimitiveType.Bool),
-    ('(32*45)', PrimitiveType.Int),
+    ('(32*45)*(30/2)', PrimitiveType.Int),
     ('(45+10)', PrimitiveType.Int),
 
     # Tests for MulDiv
     ('12*62', PrimitiveType.Int),
-    ('1*33', PrimitiveType.Int),
-    ('17*4', PrimitiveType.Int),
+    ('1*33*(-23)', PrimitiveType.Int),
+    ('17*4/(12*-1)', PrimitiveType.Int),
 
     # ------------------ Velasco tests ------------------
 
     # AddSub
     ('23+49', PrimitiveType.Int),
-    ('16-0', PrimitiveType.Int),
+    ('(16-0)+(-3)', PrimitiveType.Int),
 
-    # Boolean Negation
+    # Boolean Negation and Int negation
     ('!true', PrimitiveType.Bool),
     ('!!(!false)', PrimitiveType.Bool),
+    ('--(-3)', PrimitiveType.Int),
 
     # Compare Binary Operator
     ('(-23)<=48', PrimitiveType.Bool),
     ('1==1', PrimitiveType.Bool),
     ('(20+38)*56<92', PrimitiveType.Bool),
 
-
-
-
-
 ]
 
 INVALID_EXPRESSIONS = [
+
     # Each entry is a pair: (expression source, expected error category)
     # As for VALID_EXPRESSIONS, there should be NO WHITE SPACE in the expressions.
 
+    # Tests for negation
     ('!37', Category.INVALID_NEGATION),
     ('!!37', Category.INVALID_NEGATION),
+
 
     # Brown tests
     # Can't make invalid tests for literals as it won't go into the method
@@ -103,13 +105,15 @@ INVALID_EXPRESSIONS = [
     ('"someString"+"nope"', Category.INVALID_BINARY_OP),
     ('true+99', Category.INVALID_BINARY_OP),
 
-    # Boolean Negation (can't think of anymore for now)
+    # Negation
     ('!!!20', Category.INVALID_NEGATION),
     ('!"Im a string"', Category.INVALID_NEGATION),
+    ('-false', Category.INVALID_NEGATION),
+    ('-"some string eh"', Category.INVALID_NEGATION),
 
     # Compare Binary Operator
-    ('false==true', Category.INVALID_NEGATION),
-    ('("Cant believe youve done this.")<30', Category.INVALID_NEGATION),
+    ('false==true', Category.INVALID_BINARY_OP),
+    ('("Cant believe youve done this.")<(30+2)', Category.INVALID_BINARY_OP),
 
 ]
 
@@ -117,16 +121,14 @@ INVALID_EXPRESSIONS = [
 # Creating custom list of VarDec - by Velasco
 VALID_VARDEC = [
 
-
     ('var myBool : Bool', 'myBool', PrimitiveType.Bool),
     ('var myInt : Int', 'myInt', PrimitiveType.Int),
     ('var myString : String', 'myString', PrimitiveType.String),
-    ('var myBool : Bool = true', 'myBool', PrimitiveType.Bool),
+    ('var myBool : Bool = !true', 'myBool', PrimitiveType.Bool),
     ('var myInt : Int = -100', 'myInt', PrimitiveType.Int),
     ('var myString : String = "SomeString"', 'myString', PrimitiveType.String),
     ('var myInt : Int = 100 / 12', 'myInt', PrimitiveType.Int),
-
-    # todo: ^ add some concatenated strings up there. And parens
+    ('var myVar : Int = ((100 + 13) * 5)', 'myVar', PrimitiveType.Int),
 
 ]
 
@@ -153,7 +155,7 @@ VALID_VARIABLE = [
     ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'myBool', PrimitiveType.Bool),
     ('var myBool : Bool = true\nvar y : String\nprint myBool\nprint y', 'y', PrimitiveType.String),
     ('var someVar : Bool = (30 == 40)\nprint someVar', 'someVar', PrimitiveType.Bool),
-
+    ('var anExpre : Bool = (12 < 10)\nif (anExpre) { }', 'anExpre', PrimitiveType.Bool),
 
 ]
 
@@ -168,6 +170,9 @@ INVALID_VARIABLE = [
     'var varA : String = "varA String"\nprint varB',
     'var anInt : String = 100 / "String"\nprint anInt',
     'var newVar : String = "WasCompEngWorthIt?"\nprint newVar\nprint x',
+
+    # Here's one with an error in declaration.
+    'var anExpre : Bool = (12 < false)\nif (anExpre) { }',
 
     # Leaving commented out a poorly designed test of invalid variables to acknowledge its existence -
     # this one does not even have an undefined name error. It's literally in the wrong testing list.
@@ -198,7 +203,6 @@ INVALID_PRINT = [
     ('print (12 < !20)', [Category.INVALID_BINARY_OP, Category.INVALID_BINARY_OP,
                           Category.INVALID_NEGATION, Category.UNPRINTABLE_EXPRESSION]),
 
-
 ]
 
 VALID_ASSIGNMENT = [
@@ -214,8 +218,6 @@ VALID_ASSIGNMENT = [
 
 INVALID_ASSIGNMENT = [
 
-    # Add more later
-
     ('myInt = 12', Category.UNDEFINED_NAME),
     ('var myString : String\nmyString = true', Category.ASSIGN_TO_WRONG_TYPE),
     ('var myInt : Int\nvar myGuy : String\nmyPerson = (10 - 20)', Category.UNDEFINED_NAME),
@@ -224,8 +226,10 @@ INVALID_ASSIGNMENT = [
 
 ]
 
+
+# For invalid test cases below, just look for the Category.CONDITION_NOT_BOOL error
+
 VALID_WHILE = [
-    # Test takes two arguments, First is a while statement to test, second is True if errors exist.
     'while true { }',
     'while 10 == 10 { print 10 + 10 }',
     'while false { while 10 < 5 { print "string" } }',
@@ -240,19 +244,16 @@ INVALID_WHILE = [
 
 VALID_IF = [
 
-    # todo - fill if statement blocks with code (maybe)
     'var X : Bool = false\nif X {} else {}',
     'if !(90 < 100) {}',
-    'if (true) {}'
-
+    'if (true) { if (123 < 23) { } else { } }'
 
 ]
 
 INVALID_IF = [
 
-    # todo - fill if statement blocks with code (maybe)
     'var X : Int = 30\nif X - 30 {} else {}',
     'if !"Totally a bool" {}',
-    'if (421) {}',
+    'if (true) { if (123) { } }',
 
 ]
